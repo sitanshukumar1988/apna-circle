@@ -1,7 +1,8 @@
+import './globals.css';
 
 export const metadata = {
-  title: "Apna Circle",
-  description: "A private community to connect with people",
+  title: 'Apna Circle',
+  description: 'A private community app',
 };
 
 export default function RootLayout({ children }) {
