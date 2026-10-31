@@ -1,13 +1,22 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
+import Cropper from 'react-easy-crop';
+import getCroppedImg from '../../lib/cropImage'; // Helper file (next step me banayenge)
 
 export default function Profile() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState({ name: '', bio: '', city: '', avatar_url: '' });
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  // Crop states
+  const [imageSrc, setImageSrc] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -22,9 +31,37 @@ export default function Profile() {
     fetchProfile();
   }, [router]);
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const onFileChange = async (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      let imageDataUrl = await readFile(file);
+      setImageSrc(imageDataUrl);
+    }
+  };
+
+  const readFile = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.addEventListener('load', () => resolve(reader.result), false);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const handleCropSave = async () => {
+    try {
+      const croppedImage = await getCroppedImg(imageSrc, croppedAreaPixels);
+      setImageSrc(null); // Crop screen band karo
+      uploadToCloudinary(croppedImage);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const uploadToCloudinary = async (file) => {
     setUploading(true);
     try {
       const formData = new FormData();
@@ -53,6 +90,31 @@ export default function Profile() {
 
   if (!user) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
 
+  // Agar crop screen open hai, toh ye dikhao
+  if (imageSrc) {
+    return (
+      <div style={{ position: 'relative', width: '100vw', height: '100vh', background: '#333' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 80 }}>
+          <Cropper
+            image={imageSrc}
+            crop={crop}
+            zoom={zoom}
+            aspect={1} // 1:1 Square for DP
+            cropShape="round"
+            onCropChange={setCrop}
+            onCropComplete={onCropComplete}
+            onZoomChange={setZoom}
+          />
+        </div>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, display: 'flex', justifyContent: 'space-around', padding: '20px', background: 'white' }}>
+          <button onClick={() => setImageSrc(null)} style={{ padding: '10px 20px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '5px' }}>Cancel</button>
+          <button onClick={handleCropSave} style={{ padding: '10px 20px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '5px' }}>Crop & Save</button>
+        </div>
+      </div>
+    );
+  }
+
+  // Normal Profile Page
   return (
     <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
       <h1 style={{ textAlign: 'center', marginBottom: '20px' }}>My Profile</h1>
@@ -64,7 +126,7 @@ export default function Profile() {
           <div style={{ width: '120px', height: '120px', borderRadius: '50%', backgroundColor: '#ddd', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px' }}>👤</div>
         )}
         <br /><br />
-        <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} id="dp-upload" />
+        <input type="file" accept="image/*" onChange={onFileChange} style={{ display: 'none' }} id="dp-upload" />
         <label htmlFor="dp-upload" style={{ padding: '8px 15px', backgroundColor: '#0070f3', color: 'white', borderRadius: '5px', cursor: 'pointer' }}>
           {uploading ? 'Uploading...' : 'Change DP'}
         </label>
@@ -80,7 +142,6 @@ export default function Profile() {
         </button>
       </div>
 
-      {/* Logout Button */}
       <button onClick={handleLogout} style={{ marginTop: '20px', width: '100%', padding: '12px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }}>
         Logout
       </button>
@@ -90,4 +151,4 @@ export default function Profile() {
       </button>
     </div>
   );
-            }
+    }
