@@ -13,12 +13,17 @@ export default function Home() {
     const savedLang = document.cookie.split('; ').find(row => row.startsWith('locale='));
     if (savedLang) setLang(savedLang.split('=')[1]);
 
+    // User check karo
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) setUser(session.user);
+      if (!session) {
+        router.push('/login'); // Agar login nahi hai, toh login page par bhej do
+      } else {
+        setUser(session.user);
+      }
     };
     checkUser();
-  }, []);
+  }, [router]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -33,31 +38,67 @@ export default function Home() {
 
   // Translations
   const t = {
-    en: { title: "Welcome to Apna Circle", subtitle: "Your app is being built!", login: "Login", signup: "Sign Up", logout: "Logout", loggedIn: "Logged in as:" },
-    hi: { title: "अपना सर्कल में आपका स्वागत है", subtitle: "आपका ऐप बन रहा है!", login: "लॉगिन करें", signup: "साइन अप करें", logout: "लॉगआउट", loggedIn: "लॉग इन हैं:" }
+    en: { 
+      title: "Apna Circle", 
+      feed: "Your Feed", 
+      noPosts: "No posts yet. Be the first to post!",
+      home: "Home",
+      post: "Post",
+      profile: "Profile",
+      logout: "Logout"
+    },
+    hi: { 
+      title: "अपना सर्कल", 
+      feed: "आपकी फीड", 
+      noPosts: "अभी कोई पोस्ट नहीं है। पहली पोस्ट आप करें!",
+      home: "होम",
+      post: "पोस्ट",
+      profile: "प्रोफाइल",
+      logout: "लॉगआउट"
+    }
   };
 
-  return (
-    <div style={{ padding: '20px', textAlign: 'center' }}>
-      <div style={{ marginBottom: '20px' }}>
-        <button onClick={() => changeLanguage('en')} style={{ margin: '0 5px', padding: '5px 10px' }}>English</button>
-        <button onClick={() => changeLanguage('hi')} style={{ margin: '0 5px', padding: '5px 10px' }}>हिंदी</button>
-      </div>
+  if (!user) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
 
-      <h1 style={{ fontSize: '32px', fontWeight: 'bold' }}>{t[lang].title}</h1>
-      <p>{t[lang].subtitle}</p>
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
       
-      {user ? (
-        <div style={{ marginTop: '20px', padding: '20px', backgroundColor: '#e0f7fa', borderRadius: '8px', display: 'inline-block' }}>
-          <p>{t[lang].loggedIn} <strong>{user.email}</strong></p>
-          <button onClick={handleLogout} style={{ padding: '10px 20px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '5px', marginTop: '10px', cursor: 'pointer' }}>{t[lang].logout}</button>
+      {/* Top Header */}
+      <header style={{ backgroundColor: '#0070f3', padding: '15px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>{t[lang].title}</h1>
+        <div>
+          <button onClick={() => changeLanguage('en')} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', marginRight: '10px', fontWeight: lang === 'en' ? 'bold' : 'normal' }}>EN</button>
+          <button onClick={() => changeLanguage('hi')} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontWeight: lang === 'hi' ? 'bold' : 'normal' }}>HI</button>
         </div>
-      ) : (
-        <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
-          <a href="/login" style={{ padding: '10px 20px', backgroundColor: '#28a745', color: 'white', textDecoration: 'none', borderRadius: '5px' }}>{t[lang].login}</a>
-          <a href="/signup" style={{ padding: '10px 20px', backgroundColor: '#0070f3', color: 'white', textDecoration: 'none', borderRadius: '5px' }}>{t[lang].signup}</a>
+      </header>
+
+      {/* Main Feed Area */}
+      <main style={{ flex: 1, padding: '20px', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ width: '100%', maxWidth: '500px', backgroundColor: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', textAlign: 'center', color: '#666' }}>
+          <h2 style={{ fontSize: '18px', marginBottom: '15px', color: '#333' }}>{t[lang].feed}</h2>
+          <p>{t[lang].noPosts}</p>
         </div>
-      )}
+      </main>
+
+      {/* Bottom Navigation Bar */}
+      <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '15px 0' }}>
+        <button style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3' }}>
+          <span style={{ fontSize: '20px' }}>🏠</span>
+          <span style={{ fontSize: '12px', marginTop: '4px' }}>{t[lang].home}</span>
+        </button>
+        
+        {/* Post Button (Aage chalkar kaam karega) */}
+        <button style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
+          <span style={{ fontSize: '20px' }}>➕</span>
+          <span style={{ fontSize: '12px', marginTop: '4px' }}>{t[lang].post}</span>
+        </button>
+        
+        {/* Profile / Logout Button */}
+        <button onClick={handleLogout} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#dc3545' }}>
+          <span style={{ fontSize: '20px' }}>👤</span>
+          <span style={{ fontSize: '12px', marginTop: '4px' }}>{t[lang].logout}</span>
+        </button>
+      </nav>
     </div>
   );
     }
