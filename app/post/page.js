@@ -7,7 +7,7 @@ export default function Post() {
   const [caption, setCaption] = useState('');
   const [image, setImage] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(null); // Error dikhane ke liye
+  const [errorMsg, setErrorMsg] = useState(null);
   const router = useRouter();
 
   const handlePost = async (e) => {
@@ -21,10 +21,10 @@ export default function Post() {
     setUploading(true);
 
     try {
-      // 1. Cloudinary me photo upload karo
+      // 1. Cloudinary me photo upload karo (Sahi preset ke saath)
       const formData = new FormData();
       formData.append('file', image);
-      formData.append('upload_preset', 'connect-to-senior'); 
+      formData.append('upload_preset', 'apna-circle'); // Yahan sahi naam daala hai
 
       const res = await fetch(`https://api.cloudinary.com/v1_1/pbpkiacn/image/upload`, {
         method: 'POST',
@@ -33,7 +33,6 @@ export default function Post() {
       
       const data = await res.json();
       
-      // Agar Cloudinary error de raha hai
       if (data.error) {
         throw new Error(data.error.message);
       }
@@ -56,7 +55,7 @@ export default function Post() {
         router.push('/');
       }
     } catch (error) {
-      setErrorMsg(error.message); // Error screen par dikhao
+      setErrorMsg(error.message);
     } finally {
       setUploading(false);
     }
@@ -91,7 +90,6 @@ export default function Post() {
         </button>
       </form>
 
-      {/* Error Screen par dikhane ke liye */}
       {errorMsg && (
         <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#ffe6e6', color: 'red', borderRadius: '5px', textAlign: 'center', fontWeight: 'bold' }}>
           Error: {errorMsg}
@@ -106,4 +104,4 @@ export default function Post() {
       </button>
     </div>
   );
-                      }
+              }
