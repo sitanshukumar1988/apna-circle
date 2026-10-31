@@ -16,7 +16,7 @@ export default function Profile() {
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   
-  const [showFullImage, setShowFullImage] = useState(false); // Full screen ke liye
+  const [showFullImage, setShowFullImage] = useState(false);
 
   const router = useRouter();
 
@@ -115,11 +115,13 @@ export default function Profile() {
     );
   }
 
-  // Full Screen Image View
+  // DP Popup (Modal) - Beech me khulega
   if (showFullImage && profile.avatar_url) {
     return (
-      <div onClick={() => setShowFullImage(false)} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-        <img src={profile.avatar_url} alt="Full DP" style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} />
+      <div onClick={() => setShowFullImage(false)} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
+        <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '10px', maxWidth: '90%', maxHeight: '90%', overflow: 'hidden' }}>
+          <img src={profile.avatar_url} alt="Full DP" style={{ width: '100%', height: 'auto', maxHeight: '80vh', objectFit: 'contain', borderRadius: '5px' }} />
+        </div>
       </div>
     );
   }
@@ -133,7 +135,7 @@ export default function Profile() {
           <img 
             src={profile.avatar_url} 
             alt="DP" 
-            onClick={() => setShowFullImage(true)} // Click karne par full screen
+            onClick={() => setShowFullImage(true)} 
             style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #0070f3', cursor: 'pointer' }} 
           />
         ) : (
@@ -165,4 +167,4 @@ export default function Profile() {
       </button>
     </div>
   );
-  }
+          }
