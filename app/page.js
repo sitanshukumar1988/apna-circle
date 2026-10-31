@@ -8,7 +8,7 @@ export default function Home() {
   const [lang, setLang] = useState('en');
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState([]);
-  const [fullImage, setFullImage] = useState(null); // Full screen image ke liye
+  const [fullImage, setFullImage] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -37,23 +37,16 @@ export default function Home() {
     fetchData();
   }, [router]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    router.push('/login');
-  };
-
   const changeLanguage = (newLang) => {
     document.cookie = `locale=${newLang}; path=/; max-age=31536000`;
     setLang(newLang);
   };
 
   const t = {
-    en: { title: "Apna Circle", feed: "Your Feed", noPosts: "No posts yet. Be the first to post!", home: "Home", post: "Post", profile: "Profile", logout: "Logout" },
-    hi: { title: "अपना सर्कल", feed: "आपकी फीड", noPosts: "अभी कोई पोस्ट नहीं है। पहली पोस्ट आप करें!", home: "होम", post: "पोस्ट", profile: "प्रोफाइल", logout: "लॉगआउट" }
+    en: { title: "Apna Circle", feed: "Your Feed", noPosts: "No posts yet. Be the first to post!", home: "Home", post: "Post", profile: "Profile" },
+    hi: { title: "अपना सर्कल", feed: "आपकी फीड", noPosts: "अभी कोई पोस्ट नहीं है। पहली पोस्ट आप करें!", home: "होम", post: "पोस्ट", profile: "प्रोफाइल" }
   };
 
-  // Splash Screen Logic
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#0070f3', color: 'white', textAlign: 'center', padding: '20px' }}>
@@ -100,7 +93,7 @@ export default function Home() {
                 <img 
                   src={post.image_url} 
                   alt="Post" 
-                  onClick={() => setFullImage(post.image_url)} // Click karne par full screen
+                  onClick={() => setFullImage(post.image_url)} 
                   style={{ width: '100%', display: 'block', cursor: 'pointer' }} 
                 />
                 {post.caption && (
@@ -131,15 +124,17 @@ export default function Home() {
         </button>
       </nav>
 
-      {/* Full Screen Image View */}
+      {/* Image Popup (Modal) - Beech me khulega */}
       {fullImage && (
         <div 
           onClick={() => setFullImage(null)} 
-          style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}
+          style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}
         >
-          <img src={fullImage} alt="Full Post" style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} />
+          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '10px', maxWidth: '90%', maxHeight: '90%', overflow: 'hidden' }}>
+            <img src={fullImage} alt="Popup Post" style={{ width: '100%', height: 'auto', maxHeight: '80vh', objectFit: 'contain', borderRadius: '5px' }} />
+          </div>
         </div>
       )}
     </div>
   );
-      }
+    }
