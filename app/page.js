@@ -8,6 +8,7 @@ export default function Home() {
   const [lang, setLang] = useState('en');
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState([]);
+  const [profiles, setProfiles] = useState({}); // Saare users ki profile save karne ke liye
   const [fullImage, setFullImage] = useState(null);
   const router = useRouter();
 
@@ -23,13 +24,33 @@ export default function Home() {
       }
       setUser(session.user);
 
-      const { data, error } = await supabase
+      // 1. Saari posts fetch karo
+      const { data: postsData, error: postsError } = await supabase
         .from('posts')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && data) {
-        setPosts(data);
+      if (!postsError && postsData) {
+        setPosts(postsData);
+
+        // 2. Jitne bhi emails posts me hain, unki profiles fetch karo
+        const emails = [...new Set(postsData.map(p => p.user_email))];
+        
+        if (emails.length > 0) {
+          const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('*')
+            .in('email', emails); // Yahan email match kar rahe hain
+
+          // Profiles ko ek object me save karo { email: { name, avatar_url } }
+          const profileMap = {};
+          if (profilesData) {
+            profilesData.forEach(p => {
+              profileMap[p.email] = p;
+            });
+          }
+          setProfiles(profileMap);
+        }
       }
       
       setTimeout(() => setLoading(false), 1000);
@@ -85,24 +106,38 @@ export default function Home() {
               <p>{t[lang].noPosts}</p>
             </div>
           ) : (
-            posts.map((post) => (
-              <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-                <div style={{ padding: '10px 15px', borderBottom: '1px solid #eee', fontWeight: 'bold', fontSize: '14px' }}>
-                  {post.user_email}
-                </div>
-                <img 
-                  src={post.image_url} 
-                  alt="Post" 
-                  onClick={() => setFullImage(post.image_url)} 
-                  style={{ width: '100%', display: 'block', cursor: 'pointer' }} 
-                />
-                {post.caption && (
-                  <div style={{ padding: '10px 15px', fontSize: '15px' }}>
-                    <strong>{post.user_email}: </strong> {post.caption}
+            posts.map((post) => {
+              // Is post wale user ki profile nikalo
+              const postUser = profiles[post.user_email] || {};
+              const displayName = postUser.name || post.user_email.split('@')[0]; // Agar naam nahi hai toh email ka pehla hissa dikhao
+              
+              return (
+                <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+                  
+                  {/* User Info Header */}
+                  <div style={{ padding: '10px 15px', borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {postUser.avatar_url ? (
+                      <img src={postUser.avatar_url} alt="DP" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>👤</div>
+                    )}
+                    <span style={{ fontWeight: 'bold', fontSize: '15px' }}>{displayName}</span>
                   </div>
-                )}
-              </div>
-            ))
+
+                  <img 
+                    src={post.image_url} 
+                    alt="Post" 
+                    onClick={() => setFullImage(post.image_url)} 
+                    style={{ width: '100%', display: 'block', cursor: 'pointer' }} 
+                  />
+                  {post.caption && (
+                    <div style={{ padding: '10px 15px', fontSize: '15px' }}>
+                      <strong>{displayName}: </strong> {post.caption}
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       </main>
@@ -124,7 +159,7 @@ export default function Home() {
         </button>
       </nav>
 
-      {/* Image Popup (Modal) - Beech me khulega */}
+      {/* Image Popup (Modal) */}
       {fullImage && (
         <div 
           onClick={() => setFullImage(null)} 
@@ -137,4 +172,4 @@ export default function Home() {
       )}
     </div>
   );
-    }
+      }
