@@ -8,7 +8,7 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [lang, setLang] = useState('en');
   const [loading, setLoading] = useState(true);
-  const [posts, setPosts] = useState([]); // Posts store karne ke liye
+  const [posts, setPosts] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -50,8 +50,8 @@ export default function Home() {
   };
 
   const t = {
-    en: { title: "Apna Circle", feed: "Your Feed", noPosts: "No posts yet. Be the first to post!", home: "Home", post: "Post", logout: "Logout" },
-    hi: { title: "अपना सर्कल", feed: "आपकी फीड", noPosts: "अभी कोई पोस्ट नहीं है। पहली पोस्ट आप करें!", home: "होम", post: "पोस्ट", logout: "लॉगआउट" }
+    en: { title: "Apna Circle", feed: "Your Feed", noPosts: "No posts yet. Be the first to post!", home: "Home", post: "Post", profile: "Profile", logout: "Logout" },
+    hi: { title: "अपना सर्कल", feed: "आपकी फीड", noPosts: "अभी कोई पोस्ट नहीं है। पहली पोस्ट आप करें!", home: "होम", post: "पोस्ट", profile: "प्रोफाइल", logout: "लॉगआउट" }
   };
 
   if (loading) {
@@ -120,11 +120,11 @@ export default function Home() {
           <span style={{ fontSize: '12px', marginTop: '4px' }}>{t[lang].post}</span>
         </button>
         
-        <button onClick={handleLogout} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#dc3545' }}>
+        <button onClick={() => router.push('/profile')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
           <span style={{ fontSize: '20px' }}>👤</span>
-          <span style={{ fontSize: '12px', marginTop: '4px' }}>{t[lang].logout}</span>
+          <span style={{ fontSize: '12px', marginTop: '4px' }}>{t[lang].profile}</span>
         </button>
       </nav>
     </div>
   );
-}
+    }
