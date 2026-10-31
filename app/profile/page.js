@@ -7,7 +7,7 @@ import getCroppedImg from '../../lib/cropImage';
 
 export default function Profile() {
   const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState({ name: '', bio: '', city: '', avatar_url: '' });
+  const [profile, setProfile] = useState({ name: '', bio: '', city: '', avatar_url: '', email: '' });
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   
@@ -27,7 +27,12 @@ export default function Profile() {
       setUser(user);
 
       const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-      if (data) setProfile(data);
+      if (data) {
+        setProfile(data);
+      } else {
+        // Agar naya user hai, toh email set karke rakho
+        setProfile(prev => ({ ...prev, email: user.email }));
+      }
     };
     fetchProfile();
   }, [router]);
@@ -77,7 +82,13 @@ export default function Profile() {
   const handleSave = async () => {
     setSaving(true);
     const { error } = await supabase.from('profiles').upsert({
-      id: user.id, ...profile, updated_at: new Date()
+      id: user.id, 
+      email: user.email, // Feed me naam dikhane ke liye email save kar rahe hain
+      name: profile.name,
+      bio: profile.bio,
+      city: profile.city,
+      avatar_url: profile.avatar_url,
+      updated_at: new Date()
     });
     if (error) alert(error.message);
     else alert('Profile Saved!');
@@ -167,4 +178,4 @@ export default function Profile() {
       </button>
     </div>
   );
-          }
+}
