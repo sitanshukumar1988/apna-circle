@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
 import Cropper from 'react-easy-crop';
-import getCroppedImg from '../../lib/cropImage'; // Helper file (next step me banayenge)
+import getCroppedImg from '../../lib/cropImage';
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -11,11 +11,12 @@ export default function Profile() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   
-  // Crop states
   const [imageSrc, setImageSrc] = useState(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  
+  const [showFullImage, setShowFullImage] = useState(false); // Full screen ke liye
 
   const router = useRouter();
 
@@ -54,7 +55,7 @@ export default function Profile() {
   const handleCropSave = async () => {
     try {
       const croppedImage = await getCroppedImg(imageSrc, croppedAreaPixels);
-      setImageSrc(null); // Crop screen band karo
+      setImageSrc(null); 
       uploadToCloudinary(croppedImage);
     } catch (e) {
       console.error(e);
@@ -90,7 +91,7 @@ export default function Profile() {
 
   if (!user) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
 
-  // Agar crop screen open hai, toh ye dikhao
+  // Crop Screen
   if (imageSrc) {
     return (
       <div style={{ position: 'relative', width: '100vw', height: '100vh', background: '#333' }}>
@@ -99,7 +100,7 @@ export default function Profile() {
             image={imageSrc}
             crop={crop}
             zoom={zoom}
-            aspect={1} // 1:1 Square for DP
+            aspect={1}
             cropShape="round"
             onCropChange={setCrop}
             onCropComplete={onCropComplete}
@@ -114,14 +115,27 @@ export default function Profile() {
     );
   }
 
-  // Normal Profile Page
+  // Full Screen Image View
+  if (showFullImage && profile.avatar_url) {
+    return (
+      <div onClick={() => setShowFullImage(false)} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+        <img src={profile.avatar_url} alt="Full DP" style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} />
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
       <h1 style={{ textAlign: 'center', marginBottom: '20px' }}>My Profile</h1>
       
       <div style={{ textAlign: 'center', marginBottom: '20px' }}>
         {profile.avatar_url ? (
-          <img src={profile.avatar_url} alt="DP" style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #0070f3' }} />
+          <img 
+            src={profile.avatar_url} 
+            alt="DP" 
+            onClick={() => setShowFullImage(true)} // Click karne par full screen
+            style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #0070f3', cursor: 'pointer' }} 
+          />
         ) : (
           <div style={{ width: '120px', height: '120px', borderRadius: '50%', backgroundColor: '#ddd', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px' }}>👤</div>
         )}
@@ -151,4 +165,4 @@ export default function Profile() {
       </button>
     </div>
   );
-    }
+  }
