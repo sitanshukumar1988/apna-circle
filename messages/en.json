@@ -1,0 +1,10 @@
+{
+  "HomePage": {
+    "title": "Welcome to Apna Circle",
+    "subtitle": "Your app is being built!",
+    "login": "Login",
+    "signup": "Sign Up",
+    "logout": "Logout",
+    "loggedInAs": "Logged in as:"
+  }
+}
