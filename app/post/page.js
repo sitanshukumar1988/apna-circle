@@ -7,43 +7,56 @@ export default function Post() {
   const [caption, setCaption] = useState('');
   const [image, setImage] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(null); // Error dikhane ke liye
   const router = useRouter();
 
   const handlePost = async (e) => {
     e.preventDefault();
+    setErrorMsg(null);
+    
     if (!image) {
-      alert('Pehle koi photo select karo!');
+      setErrorMsg('Pehle koi photo select karo!');
       return;
     }
     setUploading(true);
 
     try {
-      // Cloudinary me photo upload karo
+      // 1. Cloudinary me photo upload karo
       const formData = new FormData();
       formData.append('file', image);
-      formData.append('upload_preset', 'connect-to-senior'); // Jo preset tumne Cloudinary me banaya tha
+      formData.append('upload_preset', 'connect-to-senior'); 
 
       const res = await fetch(`https://api.cloudinary.com/v1_1/pbpkiacn/image/upload`, {
         method: 'POST',
         body: formData,
       });
+      
       const data = await res.json();
       
+      // Agar Cloudinary error de raha hai
+      if (data.error) {
+        throw new Error(data.error.message);
+      }
+      
       if (data.secure_url) {
-        // Supabase me data save karo
+        // 2. Supabase me save karo
         const { data: { user } } = await supabase.auth.getUser();
         
-        await supabase.from('posts').insert({
+        const { error: dbError } = await supabase.from('posts').insert({
           user_email: user.email,
           image_url: data.secure_url,
           caption: caption
         });
 
+        if (dbError) {
+          throw new Error(dbError.message);
+        }
+
         alert('Post uploaded successfully!');
         router.push('/');
       }
     } catch (error) {
-      alert('Error: ' + error.message);
+      setErrorMsg(error.message); // Error screen par dikhao
     } finally {
       setUploading(false);
     }
@@ -78,6 +91,13 @@ export default function Post() {
         </button>
       </form>
 
+      {/* Error Screen par dikhane ke liye */}
+      {errorMsg && (
+        <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#ffe6e6', color: 'red', borderRadius: '5px', textAlign: 'center', fontWeight: 'bold' }}>
+          Error: {errorMsg}
+        </div>
+      )}
+
       <button 
         onClick={() => router.push('/')} 
         style={{ marginTop: '20px', width: '100%', padding: '10px', backgroundColor: 'transparent', color: '#666', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
@@ -86,4 +106,4 @@ export default function Post() {
       </button>
     </div>
   );
-  }
+                      }
