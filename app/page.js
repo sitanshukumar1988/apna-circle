@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 export default function Home() {
   const [user, setUser] = useState(null);
   const [lang, setLang] = useState('en');
-  const [loading, setLoading] = useState(true); // Splash screen ke liye
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -20,8 +20,7 @@ export default function Home() {
       } else {
         setUser(session.user);
       }
-      // 2.5 second baad splash screen hatao
-      setTimeout(() => setLoading(false), 2500);
+      setTimeout(() => setLoading(false), 1000);
     };
     checkUser();
   }, [router]);
@@ -38,39 +37,25 @@ export default function Home() {
   };
 
   const t = {
-    en: { title: "Apna Circle", feed: "Your Feed", noPosts: "No posts yet. Be the first to post!", home: "Home", post: "Post", profile: "Profile", logout: "Logout" },
-    hi: { title: "अपना सर्कल", feed: "आपकी फीड", noPosts: "अभी कोई पोस्ट नहीं है। पहली पोस्ट आप करें!", home: "होम", post: "पोस्ट", profile: "प्रोफाइल", logout: "लॉगआउट" }
+    en: { title: "Apna Circle", feed: "Your Feed", noPosts: "No posts yet. Be the first to post!", home: "Home", post: "Post", logout: "Logout" },
+    hi: { title: "अपना सर्कल", feed: "आपकी फीड", noPosts: "अभी कोई पोस्ट नहीं है। पहली पोस्ट आप करें!", home: "होम", post: "पोस्ट", logout: "लॉगआउट" }
   };
 
   // Splash Screen Logic
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#0070f3', color: 'white', textAlign: 'center', padding: '20px' }}>
-        
         <h1 style={{ fontSize: '42px', fontWeight: '900', marginBottom: '10px', letterSpacing: '2px' }}>
           APNA CIRCLE
         </h1>
-
-        {/* English Name */}
         <div style={{ marginTop: '10px', marginBottom: '20px' }}>
-          <p style={{ fontSize: '16px', fontWeight: 'bold', margin: '2px 0', opacity: 0.9 }}>
-            Founded by Sitanshu Kumar
-          </p>
-          <p style={{ fontSize: '14px', margin: '2px 0', opacity: 0.8 }}>
-            With SDRHP Team
-          </p>
+          <p style={{ fontSize: '16px', fontWeight: 'bold', margin: '2px 0', opacity: 0.9 }}>Founded by Sitanshu Kumar</p>
+          <p style={{ fontSize: '14px', margin: '2px 0', opacity: 0.8 }}>With SDRHP Team</p>
         </div>
-
-        {/* Hindi Name */}
         <div style={{ paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.3)' }}>
-          <p style={{ fontSize: '16px', fontWeight: 'bold', margin: '2px 0', opacity: 0.9 }}>
-            संस्थापक: सितांशु कुमार
-          </p>
-          <p style={{ fontSize: '14px', margin: '2px 0', opacity: 0.8 }}>
-            SDRHP टीम के साथ
-          </p>
+          <p style={{ fontSize: '16px', fontWeight: 'bold', margin: '2px 0', opacity: 0.9 }}>संस्थापक: सितांशु कुमार</p>
+          <p style={{ fontSize: '14px', margin: '2px 0', opacity: 0.8 }}>SDRHP टीम के साथ</p>
         </div>
-
       </div>
     );
   }
@@ -99,21 +84,26 @@ export default function Home() {
 
       {/* Bottom Navigation Bar */}
       <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '15px 0' }}>
-        <button style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3' }}>
+        
+        {/* HOME BUTTON (Ab kaam karega) */}
+        <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3' }}>
           <span style={{ fontSize: '20px' }}>🏠</span>
           <span style={{ fontSize: '12px', marginTop: '4px' }}>{t[lang].home}</span>
         </button>
         
-        <button style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
+        {/* POST BUTTON (Ab kaam karega) */}
+        <button onClick={() => router.push('/post')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
           <span style={{ fontSize: '20px' }}>➕</span>
           <span style={{ fontSize: '12px', marginTop: '4px' }}>{t[lang].post}</span>
         </button>
         
+        {/* LOGOUT BUTTON */}
         <button onClick={handleLogout} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#dc3545' }}>
           <span style={{ fontSize: '20px' }}>👤</span>
           <span style={{ fontSize: '12px', marginTop: '4px' }}>{t[lang].logout}</span>
         </button>
+        
       </nav>
     </div>
   );
-}
+    }
