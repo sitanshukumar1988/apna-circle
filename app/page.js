@@ -2,27 +2,40 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function Home() {
   const [user, setUser] = useState(null);
   const [lang, setLang] = useState('en');
   const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState([]); // Posts store karne ke liye
   const router = useRouter();
 
   useEffect(() => {
     const savedLang = document.cookie.split('; ').find(row => row.startsWith('locale='));
     if (savedLang) setLang(savedLang.split('=')[1]);
 
-    const checkUser = async () => {
+    const fetchData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         router.push('/login');
-      } else {
-        setUser(session.user);
+        return;
       }
+      setUser(session.user);
+
+      // Supabase se saari posts fetch karo
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        setPosts(data);
+      }
+      
       setTimeout(() => setLoading(false), 1000);
     };
-    checkUser();
+    fetchData();
   }, [router]);
 
   const handleLogout = async () => {
@@ -41,13 +54,10 @@ export default function Home() {
     hi: { title: "अपना सर्कल", feed: "आपकी फीड", noPosts: "अभी कोई पोस्ट नहीं है। पहली पोस्ट आप करें!", home: "होम", post: "पोस्ट", logout: "लॉगआउट" }
   };
 
-  // Splash Screen Logic
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#0070f3', color: 'white', textAlign: 'center', padding: '20px' }}>
-        <h1 style={{ fontSize: '42px', fontWeight: '900', marginBottom: '10px', letterSpacing: '2px' }}>
-          APNA CIRCLE
-        </h1>
+        <h1 style={{ fontSize: '42px', fontWeight: '900', marginBottom: '10px', letterSpacing: '2px' }}>APNA CIRCLE</h1>
         <div style={{ marginTop: '10px', marginBottom: '20px' }}>
           <p style={{ fontSize: '16px', fontWeight: 'bold', margin: '2px 0', opacity: 0.9 }}>Founded by Sitanshu Kumar</p>
           <p style={{ fontSize: '14px', margin: '2px 0', opacity: 0.8 }}>With SDRHP Team</p>
@@ -65,7 +75,6 @@ export default function Home() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
       
-      {/* Top Header */}
       <header style={{ backgroundColor: '#0070f3', padding: '15px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>{t[lang].title}</h1>
         <div>
@@ -74,36 +83,48 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Feed Area */}
-      <main style={{ flex: 1, padding: '20px', display: 'flex', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: '500px', backgroundColor: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', textAlign: 'center', color: '#666' }}>
-          <h2 style={{ fontSize: '18px', marginBottom: '15px', color: '#333' }}>{t[lang].feed}</h2>
-          <p>{t[lang].noPosts}</p>
+      <main style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ width: '100%', maxWidth: '500px' }}>
+          <h2 style={{ fontSize: '18px', marginBottom: '15px', color: '#333', textAlign: 'center' }}>{t[lang].feed}</h2>
+          
+          {posts.length === 0 ? (
+            <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', textAlign: 'center', color: '#666' }}>
+              <p>{t[lang].noPosts}</p>
+            </div>
+          ) : (
+            posts.map((post) => (
+              <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+                <div style={{ padding: '10px 15px', borderBottom: '1px solid #eee', fontWeight: 'bold', fontSize: '14px' }}>
+                  {post.user_email}
+                </div>
+                <img src={post.image_url} alt="Post" style={{ width: '100%', display: 'block' }} />
+                {post.caption && (
+                  <div style={{ padding: '10px 15px', fontSize: '15px' }}>
+                    <strong>{post.user_email}: </strong> {post.caption}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </main>
 
-      {/* Bottom Navigation Bar */}
-      <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '15px 0' }}>
-        
-        {/* HOME BUTTON (Ab kaam karega) */}
+      <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '15px 0', position: 'sticky', bottom: 0 }}>
         <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3' }}>
           <span style={{ fontSize: '20px' }}>🏠</span>
           <span style={{ fontSize: '12px', marginTop: '4px' }}>{t[lang].home}</span>
         </button>
         
-        {/* POST BUTTON (Ab kaam karega) */}
         <button onClick={() => router.push('/post')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
           <span style={{ fontSize: '20px' }}>➕</span>
           <span style={{ fontSize: '12px', marginTop: '4px' }}>{t[lang].post}</span>
         </button>
         
-        {/* LOGOUT BUTTON */}
         <button onClick={handleLogout} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#dc3545' }}>
           <span style={{ fontSize: '20px' }}>👤</span>
           <span style={{ fontSize: '12px', marginTop: '4px' }}>{t[lang].logout}</span>
         </button>
-        
       </nav>
     </div>
   );
-    }
+}
