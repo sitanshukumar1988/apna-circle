@@ -13,6 +13,7 @@
     "autoprefixer": "^10.4.17",
     "next": "^14.2.15",
     "next-cloudinary": "^6.10.0",
+    "next-intl": "^3.20.0",
     "postcss": "^8.4.35",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
