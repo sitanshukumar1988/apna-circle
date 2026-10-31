@@ -2,13 +2,13 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 
 export default function Home() {
   const [user, setUser] = useState(null);
   const [lang, setLang] = useState('en');
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState([]);
+  const [fullImage, setFullImage] = useState(null); // Full screen image ke liye
   const router = useRouter();
 
   useEffect(() => {
@@ -23,7 +23,6 @@ export default function Home() {
       }
       setUser(session.user);
 
-      // Supabase se saari posts fetch karo
       const { data, error } = await supabase
         .from('posts')
         .select('*')
@@ -54,6 +53,7 @@ export default function Home() {
     hi: { title: "अपना सर्कल", feed: "आपकी फीड", noPosts: "अभी कोई पोस्ट नहीं है। पहली पोस्ट आप करें!", home: "होम", post: "पोस्ट", profile: "प्रोफाइल", logout: "लॉगआउट" }
   };
 
+  // Splash Screen Logic
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#0070f3', color: 'white', textAlign: 'center', padding: '20px' }}>
@@ -97,7 +97,12 @@ export default function Home() {
                 <div style={{ padding: '10px 15px', borderBottom: '1px solid #eee', fontWeight: 'bold', fontSize: '14px' }}>
                   {post.user_email}
                 </div>
-                <img src={post.image_url} alt="Post" style={{ width: '100%', display: 'block' }} />
+                <img 
+                  src={post.image_url} 
+                  alt="Post" 
+                  onClick={() => setFullImage(post.image_url)} // Click karne par full screen
+                  style={{ width: '100%', display: 'block', cursor: 'pointer' }} 
+                />
                 {post.caption && (
                   <div style={{ padding: '10px 15px', fontSize: '15px' }}>
                     <strong>{post.user_email}: </strong> {post.caption}
@@ -125,6 +130,16 @@ export default function Home() {
           <span style={{ fontSize: '12px', marginTop: '4px' }}>{t[lang].profile}</span>
         </button>
       </nav>
+
+      {/* Full Screen Image View */}
+      {fullImage && (
+        <div 
+          onClick={() => setFullImage(null)} 
+          style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}
+        >
+          <img src={fullImage} alt="Full Post" style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} />
+        </div>
+      )}
     </div>
   );
-    }
+      }
