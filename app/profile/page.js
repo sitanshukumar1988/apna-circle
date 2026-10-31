@@ -46,6 +46,11 @@ export default function Profile() {
     setSaving(false);
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
+
   if (!user) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
 
   return (
@@ -69,14 +74,20 @@ export default function Profile() {
         <input placeholder="Your Name" value={profile.name || ''} onChange={(e) => setProfile({ ...profile, name: e.target.value })} style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }} />
         <textarea placeholder="Bio (e.g. Fitness lover)" value={profile.bio || ''} onChange={(e) => setProfile({ ...profile, bio: e.target.value })} rows="3" style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }} />
         <input placeholder="City" value={profile.city || ''} onChange={(e) => setProfile({ ...profile, city: e.target.value })} style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }} />
-        <button onClick={handleSave} disabled={saving} style={{ padding: '12px', backgroundColor: saving ? '#ccc' : '#28a745', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold' }}>
+        
+        <button onClick={handleSave} disabled={saving} style={{ padding: '12px', backgroundColor: saving ? '#ccc' : '#28a745', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }}>
           {saving ? 'Saving...' : 'Save Profile'}
         </button>
       </div>
+
+      {/* Logout Button */}
+      <button onClick={handleLogout} style={{ marginTop: '20px', width: '100%', padding: '12px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }}>
+        Logout
+      </button>
 
       <button onClick={() => router.push('/')} style={{ marginTop: '20px', width: '100%', padding: '10px', backgroundColor: 'transparent', color: '#666', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
         Back to Home
       </button>
     </div>
   );
-    }
+            }
