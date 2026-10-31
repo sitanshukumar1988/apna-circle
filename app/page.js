@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useCookies } from 'next-client-cookies'; // Ye package baad mein add karenge
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -33,8 +32,8 @@ export default function Home() {
     <div style={{ padding: '20px', textAlign: 'center' }}>
       {/* Language Switch Buttons */}
       <div style={{ marginBottom: '20px' }}>
-        <button onClick={() => changeLanguage('en')} style={{ margin: '0 5px', padding: '5px 10px' }}>English</button>
-        <button onClick={() => changeLanguage('hi')} style={{ margin: '0 5px', padding: '5px 10px' }}>हिंदी</button>
+        <button onClick={() => changeLanguage('en')} style={{ margin: '0 5px', padding: '5px 10px', cursor: 'pointer' }}>English</button>
+        <button onClick={() => changeLanguage('hi')} style={{ margin: '0 5px', padding: '5px 10px', cursor: 'pointer' }}>हिंदी</button>
       </div>
 
       <h1 style={{ fontSize: '32px', fontWeight: 'bold' }}>{t('title')}</h1>
@@ -53,4 +52,4 @@ export default function Home() {
       )}
     </div>
   );
-      }
+                }
