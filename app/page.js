@@ -2,14 +2,17 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
 
 export default function Home() {
   const [user, setUser] = useState(null);
+  const [lang, setLang] = useState('en');
   const router = useRouter();
-  const t = useTranslations('HomePage');
 
   useEffect(() => {
+    // Language check karo
+    const savedLang = document.cookie.split('; ').find(row => row.startsWith('locale='));
+    if (savedLang) setLang(savedLang.split('=')[1]);
+
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) setUser(session.user);
@@ -23,33 +26,38 @@ export default function Home() {
     router.push('/login');
   };
 
-  const changeLanguage = (lang) => {
-    document.cookie = `locale=${lang}; path=/; max-age=31536000`;
-    window.location.reload();
+  const changeLanguage = (newLang) => {
+    document.cookie = `locale=${newLang}; path=/; max-age=31536000`;
+    setLang(newLang);
+  };
+
+  // Translations
+  const t = {
+    en: { title: "Welcome to Apna Circle", subtitle: "Your app is being built!", login: "Login", signup: "Sign Up", logout: "Logout", loggedIn: "Logged in as:" },
+    hi: { title: "अपना सर्कल में आपका स्वागत है", subtitle: "आपका ऐप बन रहा है!", login: "लॉगिन करें", signup: "साइन अप करें", logout: "लॉगआउट", loggedIn: "लॉग इन हैं:" }
   };
 
   return (
     <div style={{ padding: '20px', textAlign: 'center' }}>
-      {/* Language Switch Buttons */}
       <div style={{ marginBottom: '20px' }}>
-        <button onClick={() => changeLanguage('en')} style={{ margin: '0 5px', padding: '5px 10px', cursor: 'pointer' }}>English</button>
-        <button onClick={() => changeLanguage('hi')} style={{ margin: '0 5px', padding: '5px 10px', cursor: 'pointer' }}>हिंदी</button>
+        <button onClick={() => changeLanguage('en')} style={{ margin: '0 5px', padding: '5px 10px' }}>English</button>
+        <button onClick={() => changeLanguage('hi')} style={{ margin: '0 5px', padding: '5px 10px' }}>हिंदी</button>
       </div>
 
-      <h1 style={{ fontSize: '32px', fontWeight: 'bold' }}>{t('title')}</h1>
-      <p>{t('subtitle')}</p>
+      <h1 style={{ fontSize: '32px', fontWeight: 'bold' }}>{t[lang].title}</h1>
+      <p>{t[lang].subtitle}</p>
       
       {user ? (
         <div style={{ marginTop: '20px', padding: '20px', backgroundColor: '#e0f7fa', borderRadius: '8px', display: 'inline-block' }}>
-          <p>{t('loggedInAs')} <strong>{user.email}</strong></p>
-          <button onClick={handleLogout} style={{ padding: '10px 20px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '5px', marginTop: '10px', cursor: 'pointer' }}>{t('logout')}</button>
+          <p>{t[lang].loggedIn} <strong>{user.email}</strong></p>
+          <button onClick={handleLogout} style={{ padding: '10px 20px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '5px', marginTop: '10px', cursor: 'pointer' }}>{t[lang].logout}</button>
         </div>
       ) : (
         <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
-          <a href="/login" style={{ padding: '10px 20px', backgroundColor: '#28a745', color: 'white', textDecoration: 'none', borderRadius: '5px' }}>{t('login')}</a>
-          <a href="/signup" style={{ padding: '10px 20px', backgroundColor: '#0070f3', color: 'white', textDecoration: 'none', borderRadius: '5px' }}>{t('signup')}</a>
+          <a href="/login" style={{ padding: '10px 20px', backgroundColor: '#28a745', color: 'white', textDecoration: 'none', borderRadius: '5px' }}>{t[lang].login}</a>
+          <a href="/signup" style={{ padding: '10px 20px', backgroundColor: '#0070f3', color: 'white', textDecoration: 'none', borderRadius: '5px' }}>{t[lang].signup}</a>
         </div>
       )}
     </div>
   );
-                }
+    }
