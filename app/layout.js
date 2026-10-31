@@ -14,10 +14,10 @@ export default async function RootLayout({ children }) {
   return (
     <html lang={locale}>
       <body>
-        <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider messages={messages} locale={locale}>
           {children}
         </NextIntlClientProvider>
       </body>
     </html>
   );
-            }
+    }
