@@ -8,7 +8,7 @@ export default function Home() {
   const [lang, setLang] = useState('en');
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState([]);
-  const [profiles, setProfiles] = useState({}); // Saare users ki profile save karne ke liye
+  const [profiles, setProfiles] = useState({});
   const [fullImage, setFullImage] = useState(null);
   const router = useRouter();
 
@@ -33,16 +33,15 @@ export default function Home() {
       if (!postsError && postsData) {
         setPosts(postsData);
 
-        // 2. Jitne bhi emails posts me hain, unki profiles fetch karo
+        // 2. Profiles fetch karo (email ke basis par)
         const emails = [...new Set(postsData.map(p => p.user_email))];
         
         if (emails.length > 0) {
           const { data: profilesData } = await supabase
             .from('profiles')
             .select('*')
-            .in('email', emails); // Yahan email match kar rahe hain
+            .in('email', emails);
 
-          // Profiles ko ek object me save karo { email: { name, avatar_url } }
           const profileMap = {};
           if (profilesData) {
             profilesData.forEach(p => {
@@ -107,9 +106,9 @@ export default function Home() {
             </div>
           ) : (
             posts.map((post) => {
-              // Is post wale user ki profile nikalo
               const postUser = profiles[post.user_email] || {};
-              const displayName = postUser.name || post.user_email.split('@')[0]; // Agar naam nahi hai toh email ka pehla hissa dikhao
+              // Agar naam nahi mila toh email ka pehla hissa dikhao
+              const displayName = postUser.name || post.user_email.split('@')[0]; 
               
               return (
                 <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
