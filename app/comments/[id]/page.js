@@ -6,10 +6,10 @@ import { supabase } from '../../../lib/supabase';
 export default function CommentsPage({ params }) {
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
-  const [reactions, setReactions] = useState([]); // Saare comment reactions
+  const [reactions, setReactions] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [replyTo, setReplyTo] = useState(null);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(null); // Kis comment ka picker khula hai
+  const [showEmojiPicker, setShowEmojiPicker] = useState(null);
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,6 @@ export default function CommentsPage({ params }) {
         .order('created_at', { ascending: true });
       if (commentsData) setComments(commentsData);
 
-      // Saare reactions fetch karo
       const { data: reactionsData } = await supabase.from('comment_reactions').select('*');
       if (reactionsData) setReactions(reactionsData);
 
@@ -64,6 +63,18 @@ export default function CommentsPage({ params }) {
       setComments([...comments, addedComment]);
       setNewComment('');
       setReplyTo(null);
+
+      // Notification Bhejo
+      if (post && post.user_id !== user.id) {
+        await supabase.from('notifications').insert({
+          user_id: post.user_id,
+          sender_id: user.id,
+          sender_name: userName,
+          sender_avatar: userAvatar,
+          type: 'comment',
+          post_id: postId
+        });
+      }
     }
   };
 
@@ -73,16 +84,13 @@ export default function CommentsPage({ params }) {
 
     if (hasReacted) {
       if (hasReacted.reaction_type === reactionType) {
-        // Same reaction -> delete
         await supabase.from('comment_reactions').delete().eq('id', hasReacted.id);
         setReactions(reactions.filter(r => r.id !== hasReacted.id));
       } else {
-        // Different reaction -> update
         await supabase.from('comment_reactions').update({ reaction_type: reactionType }).eq('id', hasReacted.id);
         setReactions(reactions.map(r => r.id === hasReacted.id ? { ...r, reaction_type: reactionType } : r));
       }
     } else {
-      // New reaction
       const { data: newReaction } = await supabase.from('comment_reactions').insert({
         comment_id: commentId,
         user_id: user.id,
@@ -161,14 +169,12 @@ export default function CommentsPage({ params }) {
                         {myReaction ? `${getReactionEmoji(myReaction.reaction_type)} Reacted` : '🤍 React'}
                       </button>
 
-                      {/* Reactions Display (Chhote se emoji dikhana) */}
                       {commentReactions.length > 0 && (
                         <span style={{ fontSize: '12px', color: '#666', marginLeft: '5px' }}>
                           {commentReactions.map(r => getReactionEmoji(r.reaction_type)).join(' ')}
                         </span>
                       )}
 
-                      {/* Emoji Picker Popup */}
                       {showEmojiPicker === comment.id && (
                         <div style={{ position: 'absolute', bottom: '30px', left: '0', backgroundColor: 'white', borderRadius: '30px', padding: '5px 10px', display: 'flex', gap: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', zIndex: 10 }}>
                           <button onClick={() => handleReact(comment.id, 'like')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>👍</button>
@@ -182,7 +188,6 @@ export default function CommentsPage({ params }) {
                   </div>
                 </div>
 
-                {/* Replies */}
                 {replies.length > 0 && (
                   <div style={{ marginLeft: '45px', marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {replies.map(reply => (
@@ -195,42 +200,4 @@ export default function CommentsPage({ params }) {
                           )}
                         </div>
                         <div style={{ backgroundColor: '#f9f9f9', padding: '8px 10px', borderRadius: '10px', flex: 1 }}>
-                          <strong style={{ fontSize: '13px', display: 'block', marginBottom: '2px' }}>{reply.user_name}</strong>
-                          <span style={{ fontSize: '13px' }}>{reply.comment_text}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {replyTo && (
-        <div style={{ padding: '5px 15px', backgroundColor: '#e6f0ff', fontSize: '12px', color: '#0070f3', display: 'flex', justifyContent: 'space-between' }}>
-          Replying to comment...
-          <button onClick={() => setReplyTo(null)} style={{ background: 'none', border: 'none', color: 'red', cursor: 'pointer' }}>Cancel</button>
-        </div>
-      )}
-
-      <div style={{ display: 'flex', gap: '10px', padding: '15px', backgroundColor: 'white', borderTop: '1px solid #ddd' }}>
-        <input 
-          type="text" 
-          placeholder={replyTo ? "Write a reply..." : "Add a comment..."} 
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          style={{ flex: 1, padding: '10px', borderRadius: '20px', border: '1px solid #ccc', outline: 'none' }}
-        />
-        <button 
-          onClick={handleAddComment} 
-          style={{ padding: '10px 20px', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer' }}
-        >
-          Send
-        </button>
-      </div>
-
-    </div>
-  );
-    }
+                          <strong style
