@@ -29,18 +29,11 @@ export default function Search() {
         return;
       }
       
-      // Name YA Email dono se search karo
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
-        .limit(10);
-
-      if (error) {
-        console.log("Search Error:", error);
-      }
+      // Naya Database Function use kar rahe hain
+      const { data, error } = await supabase.rpc('search_users', { search_term: searchQuery });
 
       if (!error && data) {
+        // Apne aap ko hata do
         const filtered = data.filter(profile => profile.id !== currentUser?.id);
         setResults(filtered);
       }
@@ -75,7 +68,7 @@ export default function Search() {
 
       <input 
         type="text" 
-        placeholder="Search by name or email..." 
+        placeholder="Search by name..." 
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ccc', fontSize: '16px', marginBottom: '20px', boxSizing: 'border-box' }}
@@ -95,8 +88,7 @@ export default function Search() {
                 <div style={{ width: '45px', height: '45px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>👤</div>
               )}
               <div>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>{profile.name || 'User'}</h3>
-                <p style={{ margin: 0, fontSize: '13px', color: '#666' }}>{profile.bio || 'No bio'}</p>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>{profile.name}</h3>
               </div>
             </div>
 
@@ -124,4 +116,4 @@ export default function Search() {
 
     </div>
   );
-      }
+}
