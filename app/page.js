@@ -35,11 +35,8 @@ export default function Home() {
   const handleDelete = async (postId) => {
     if (window.confirm('Kya aap sach me ye post delete karna chahte hain?')) {
       const { error } = await supabase.from('posts').delete().eq('id', postId);
-      if (error) {
-        alert('Error deleting post: ' + error.message);
-      } else {
-        setPosts(posts.filter(post => post.id !== postId));
-      }
+      if (error) alert('Error deleting post: ' + error.message);
+      else setPosts(posts.filter(post => post.id !== postId));
     }
   };
 
@@ -49,8 +46,8 @@ export default function Home() {
   };
 
   const t = {
-    en: { title: "Apna Circle", feed: "Your Feed", noPosts: "No posts yet. Be the first to post!", home: "Home", post: "Post", profile: "Profile" },
-    hi: { title: "अपना सर्कल", feed: "आपकी फीड", noPosts: "अभी कोई पोस्ट नहीं है। पहली पोस्ट आप करें!", home: "होम", post: "पोस्ट", profile: "प्रोफाइल" }
+    en: { title: "Apna Circle", feed: "Your Feed", noPosts: "No posts yet. Be the first to post!", home: "Home", search: "Search", post: "Post", profile: "Profile" },
+    hi: { title: "अपना सर्कल", feed: "आपकी फीड", noPosts: "अभी कोई पोस्ट नहीं है। पहली पोस्ट आप करें!", home: "होम", search: "खोजें", post: "पोस्ट", profile: "प्रोफाइल" }
   };
 
   if (loading) {
@@ -98,7 +95,6 @@ export default function Home() {
               return (
                 <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                   
-                  {/* Post Header */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
                     <div 
                       onClick={() => router.push(`/user/${post.user_id}`)}
@@ -131,12 +127,18 @@ export default function Home() {
         </div>
       </main>
 
+      {/* Bottom Navigation with Search Button */}
       <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '15px 0', position: 'sticky', bottom: 0 }}>
         <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3' }}>
           <span style={{ fontSize: '20px' }}>🏠</span>
           <span style={{ fontSize: '12px', marginTop: '4px' }}>{t[lang].home}</span>
         </button>
         
+        <button onClick={() => router.push('/search')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
+          <span style={{ fontSize: '20px' }}>🔍</span>
+          <span style={{ fontSize: '12px', marginTop: '4px' }}>{t[lang].search}</span>
+        </button>
+
         <button onClick={() => router.push('/post')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
           <span style={{ fontSize: '20px' }}>➕</span>
           <span style={{ fontSize: '12px', marginTop: '4px' }}>{t[lang].post}</span>
@@ -153,7 +155,6 @@ export default function Home() {
         <div 
           style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}
         >
-          {/* Close Button (X) */}
           <button 
             onClick={() => setFullImage(null)} 
             style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1001 }}
@@ -171,4 +172,4 @@ export default function Home() {
       )}
     </div>
   );
-      }
+  }
