@@ -98,7 +98,11 @@ export default function Home() {
               return (
                 <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                   
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
+                  {/* Post Header: DP + Name (Click karne par profile khulegi) */}
+                  <div 
+                    onClick={() => router.push(`/user/${encodeURIComponent(post.user_email)}`)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #eee', cursor: 'pointer' }}
+                  >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       {post.user_avatar ? (
                         <img src={post.user_avatar} alt="Profile" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} />
@@ -110,7 +114,7 @@ export default function Home() {
 
                     {isOwner && (
                       <button 
-                        onClick={() => handleDelete(post.id)} 
+                        onClick={(e) => { e.stopPropagation(); handleDelete(post.id); }} 
                         style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#dc3545', padding: '5px' }}
                       >
                         🗑️
@@ -158,4 +162,4 @@ export default function Home() {
       )}
     </div>
   );
-  }
+                   }
