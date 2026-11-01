@@ -13,8 +13,10 @@ export default function Home() {
   
   const [likesData, setLikesData] = useState({});
   const [commentsData, setCommentsData] = useState({});
+  const [savedPosts, setSavedPosts] = useState([]); // Save kiye hue posts
   const [userProfile, setUserProfile] = useState(null);
   const [showReactionPicker, setShowReactionPicker] = useState(null);
+  const [showMenu, setShowMenu] = useState(null); // Kis post ka menu khula hai
   
   const router = useRouter();
 
@@ -57,11 +59,22 @@ export default function Home() {
         });
         setCommentsData(commentsMap);
       }
-      
+
+      // Saved Posts fetch karo
+      const { data: savedData } = await supabase.from('saved_posts').select('post_id').eq('user_id', session.user.id);
+      if (savedData) setSavedPosts(savedData.map(s => s.post_id));
+
       setLoading(false);
     };
     fetchData();
   }, [router]);
+
+  // Menu ke bahar click karne par menu band karo
+  useEffect(() => {
+    const handleClickOutside = () => setShowMenu(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   const handleReaction = async (postId, reactionType) => {
     const hasLiked = likesData[postId]?.find(like => like.user_id === user.id);
@@ -105,6 +118,27 @@ export default function Home() {
       await supabase.from('posts').delete().eq('id', postId);
       setPosts(posts.filter(post => post.id !== postId));
     }
+    setShowMenu(null);
+  };
+
+  const handleSave = async (postId) => {
+    if (savedPosts.includes(postId)) {
+      await supabase.from('saved_posts').delete().eq('post_id', postId).eq('user_id', user.id);
+      setSavedPosts(savedPosts.filter(id => id !== postId));
+      alert("Post Un-saved!");
+    } else {
+      await supabase.from('saved_posts').insert({ post_id: postId, user_id: user.id });
+      setSavedPosts([...savedPosts, postId]);
+      alert("Post Saved!");
+    }
+    setShowMenu(null);
+  };
+
+  const handleCopyLink = (postId) => {
+    const postLink = `${window.location.origin}/post/${postId}`;
+    navigator.clipboard.writeText(postLink);
+    alert("Link Copied!");
+    setShowMenu(null);
   };
 
   const changeLanguage = (newLang) => {
@@ -154,7 +188,7 @@ export default function Home() {
               return (
                 <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                   
-                  {/* Post Header (Yahan user_id se profile khulegi) */}
+                  {/* Post Header with 3-dot Menu */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
                     <div onClick={() => router.push(`/user/${post.user_id}`)} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
                       {post.user_avatar ? (
@@ -164,7 +198,29 @@ export default function Home() {
                       )}
                       <span style={{ fontWeight: 'bold' }}>{displayName}</span>
                     </div>
-                    {isOwner && <button onClick={() => handleDelete(post.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'red' }}>🗑️</button>}
+                    
+                    {/* 3 Dots Menu Button */}
+                    <div style={{ position: 'relative' }}>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setShowMenu(showMenu === post.id ? null : post.id); }} 
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', color: '#666', padding: '5px' }}
+                      >
+                        ⋮
+                      </button>
+
+                      {/* Dropdown Menu */}
+                      {showMenu === post.id && (
+                        <div style={{ position: 'absolute', top: '30px', right: '0', backgroundColor: 'white', borderRadius: '5px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', zIndex: 100, display: 'flex', flexDirection: 'column', width: '150px' }}>
+                          {isOwner && (
+                            <button onClick={() => handleDelete(post.id)} style={{ padding: '10px', textAlign: 'left', border: 'none', background: 'none', color: '#dc3545', cursor: 'pointer', borderBottom: '1px solid #eee' }}>🗑️ Delete</button>
+                          )}
+                          <button onClick={() => handleSave(post.id)} style={{ padding: '10px', textAlign: 'left', border: 'none', background: 'none', color: '#333', cursor: 'pointer', borderBottom: '1px solid #eee' }}>
+                            {savedPosts.includes(post.id) ? '🔖 Unsave' : '🔖 Save'}
+                          </button>
+                          <button onClick={() => handleCopyLink(post.id)} style={{ padding: '10px', textAlign: 'left', border: 'none', background: 'none', color: '#333', cursor: 'pointer' }}>🔗 Copy Link</button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Post Image */}
@@ -216,7 +272,6 @@ export default function Home() {
                     )}
                   </div>
 
-                  {/* Caption */}
                   {post.caption && (
                     <div style={{ padding: '10px 15px', fontSize: '15px' }}>
                       <strong>{displayName}: </strong> {post.caption}
@@ -230,7 +285,6 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Bottom Nav */}
       <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '15px 0', position: 'sticky', bottom: 0 }}>
         <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3' }}><span style={{ fontSize: '20px' }}>🏠</span><span style={{ fontSize: '12px' }}>{t[lang].home}</span></button>
         <button onClick={() => router.push('/search')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}><span style={{ fontSize: '20px' }}>🔍</span><span style={{ fontSize: '12px' }}>{t[lang].search}</span></button>
@@ -238,7 +292,6 @@ export default function Home() {
         <button onClick={() => router.push('/profile')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}><span style={{ fontSize: '20px' }}>👤</span><span style={{ fontSize: '12px' }}>{t[lang].profile}</span></button>
       </nav>
 
-      {/* Full Image Popup with Zoom */}
       {fullImage && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 1000 }}>
           <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 1001 }}>✕</button>
@@ -252,4 +305,4 @@ export default function Home() {
 
     </div>
   );
-}
+    }
