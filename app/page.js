@@ -10,10 +10,10 @@ export default function Home() {
   const [posts, setPosts] = useState([]);
   const [fullImage, setFullImage] = useState(null);
   
-  // Likes aur Comments ke states
-  const [likesData, setLikesData] = useState({}); // { post_id: [user_ids] }
-  const [commentsData, setCommentsData] = useState({}); // { post_id: [comments] }
-  const [commentText, setCommentText] = useState({}); // Kis post par kya likha ja raha hai
+  const [likesData, setLikesData] = useState({});
+  const [commentsData, setCommentsData] = useState({});
+  const [commentText, setCommentText] = useState({});
+  const [userProfile, setUserProfile] = useState(null); // Current user ki profile
   
   const router = useRouter();
 
@@ -26,11 +26,13 @@ export default function Home() {
       if (!session) { router.push('/login'); return; }
       setUser(session.user);
 
-      // Posts fetch karo
+      // Current user ki profile fetch karo (naam aur DP ke liye)
+      const { data: profileData } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+      if (profileData) setUserProfile(profileData);
+
       const { data: postsData } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
       if (postsData) setPosts(postsData);
 
-      // Likes fetch karo
       const { data: likesData } = await supabase.from('likes').select('*');
       if (likesData) {
         const likesMap = {};
@@ -41,7 +43,6 @@ export default function Home() {
         setLikesData(likesMap);
       }
 
-      // Comments fetch karo
       const { data: commentsData } = await supabase.from('comments').select('*').order('created_at', { ascending: true });
       if (commentsData) {
         const commentsMap = {};
@@ -61,14 +62,12 @@ export default function Home() {
     const hasLiked = likesData[postId]?.includes(user.id);
     
     if (hasLiked) {
-      // Unlike
       await supabase.from('likes').delete().eq('post_id', postId).eq('user_id', user.id);
       setLikesData(prev => ({
         ...prev,
         [postId]: prev[postId].filter(id => id !== user.id)
       }));
     } else {
-      // Like
       await supabase.from('likes').insert({ post_id: postId, user_id: user.id });
       setLikesData(prev => ({
         ...prev,
@@ -81,10 +80,15 @@ export default function Home() {
     const text = commentText[postId];
     if (!text || text.trim() === '') return;
 
+    // User ka naam aur DP profile se lo
+    const userName = userProfile?.name || user.email.split('@')[0];
+    const userAvatar = userProfile?.avatar_url || null;
+
     const { data: newComment } = await supabase.from('comments').insert({
       post_id: postId,
       user_id: user.id,
-      user_name: user.user_metadata?.name || user.email.split('@')[0], // Naam save karo
+      user_name: userName,
+      user_avatar: userAvatar,
       comment_text: text
     }).select().single();
 
@@ -93,7 +97,7 @@ export default function Home() {
         ...prev,
         [postId]: [...(prev[postId] || []), newComment]
       }));
-      setCommentText(prev => ({ ...prev, [postId]: '' })); // Input clear
+      setCommentText(prev => ({ ...prev, [postId]: '' }));
     }
   };
 
@@ -120,7 +124,6 @@ export default function Home() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
       
-      {/* Header */}
       <header style={{ backgroundColor: '#0070f3', padding: '15px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>{t[lang].title}</h1>
         <div>
@@ -145,7 +148,6 @@ export default function Home() {
               return (
                 <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                   
-                  {/* Post Header */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
                     <div onClick={() => router.push(`/user/${post.user_id}`)} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
                       {post.user_avatar ? (
@@ -158,10 +160,8 @@ export default function Home() {
                     {isOwner && <button onClick={() => handleDelete(post.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'red' }}>🗑️</button>}
                   </div>
 
-                  {/* Post Image */}
                   <img src={post.image_url} alt="Post" onClick={() => setFullImage(post.image_url)} style={{ width: '100%', display: 'block', cursor: 'pointer' }} />
                   
-                  {/* Post Actions (Like, Comment) */}
                   <div style={{ padding: '10px 15px', display: 'flex', gap: '15px', borderBottom: '1px solid #eee' }}>
                     <button onClick={() => handleLike(post.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', color: hasLiked ? '#dc3545' : '#333' }}>
                       {hasLiked ? '❤️' : '🤍'} {postLikes} {t[lang].like}
@@ -171,7 +171,6 @@ export default function Home() {
                     </button>
                   </div>
 
-                  {/* Caption */}
                   {post.caption && (
                     <div style={{ padding: '10px 15px', fontSize: '15px' }}>
                       <strong>{displayName}: </strong> {post.caption}
@@ -181,12 +180,18 @@ export default function Home() {
                   {/* Comments Section */}
                   <div style={{ padding: '10px 15px', backgroundColor: '#fafafa' }}>
                     {postComments.map(comment => (
-                      <div key={comment.id} style={{ fontSize: '14px', marginBottom: '5px' }}>
-                        <strong>{comment.user_name}: </strong> {comment.comment_text}
+                      <div key={comment.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '10px' }}>
+                        {comment.user_avatar ? (
+                          <img src={comment.user_avatar} alt="DP" style={{ width: '25px', height: '25px', borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: '25px', height: '25px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>👤</div>
+                        )}
+                        <div style={{ fontSize: '14px' }}>
+                          <strong>{comment.user_name}: </strong> {comment.comment_text}
+                        </div>
                       </div>
                     ))}
 
-                    {/* Add Comment Input */}
                     <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                       <input 
                         type="text" 
@@ -208,7 +213,6 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Bottom Nav */}
       <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '15px 0', position: 'sticky', bottom: 0 }}>
         <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3' }}>
           <span style={{ fontSize: '20px' }}>🏠</span>
@@ -228,7 +232,6 @@ export default function Home() {
         </button>
       </nav>
 
-      {/* Full Image Popup */}
       {fullImage && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
           <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 1001 }}>✕</button>
@@ -239,4 +242,4 @@ export default function Home() {
       )}
     </div>
   );
-    }
+      }
