@@ -23,11 +23,9 @@ export default function CommentsPage({ params }) {
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       if (profile) setUserProfile(profile);
 
-      // Post fetch karo
       const { data: postData } = await supabase.from('posts').select('*').eq('id', postId).single();
       if (postData) setPost(postData);
 
-      // Comments fetch karo
       const { data: commentsData } = await supabase
         .from('comments')
         .select('*')
@@ -71,7 +69,7 @@ export default function CommentsPage({ params }) {
         <h1 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>Comments</h1>
       </div>
 
-      {/* Post Info (Optional) */}
+      {/* Post Info */}
       {post && (
         <div style={{ padding: '10px 15px', backgroundColor: '#fafafa', borderBottom: '1px solid #eee', fontSize: '14px', color: '#666' }}>
           <strong>{post.user_name}:</strong> {post.caption}
@@ -85,13 +83,27 @@ export default function CommentsPage({ params }) {
         ) : (
           comments.map(comment => (
             <div key={comment.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '15px' }}>
-              {comment.user_avatar ? (
-                <img src={comment.user_avatar} alt="DP" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} />
-              ) : (
-                <div style={{ width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</div>
-              )}
+              
+              {/* Profile Par Click karne ka Function */}
+              <div 
+                onClick={() => router.push(`/user/${comment.user_id}`)}
+                style={{ cursor: 'pointer' }}
+              >
+                {comment.user_avatar ? (
+                  <img src={comment.user_avatar} alt="DP" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</div>
+                )}
+              </div>
+
               <div style={{ backgroundColor: '#f0f0f0', padding: '10px', borderRadius: '10px', flex: 1 }}>
-                <strong style={{ fontSize: '14px', display: 'block', marginBottom: '3px' }}>{comment.user_name}</strong>
+                {/* Naam par click karne ka function */}
+                <strong 
+                  onClick={() => router.push(`/user/${comment.user_id}`)}
+                  style={{ fontSize: '14px', display: 'block', marginBottom: '3px', cursor: 'pointer', color: '#0070f3' }}
+                >
+                  {comment.user_name}
+                </strong>
                 <span style={{ fontSize: '14px' }}>{comment.comment_text}</span>
               </div>
             </div>
@@ -99,7 +111,7 @@ export default function CommentsPage({ params }) {
         )}
       </div>
 
-      {/* Add Comment Input (Fixed at bottom) */}
+      {/* Add Comment Input */}
       <div style={{ display: 'flex', gap: '10px', padding: '15px', backgroundColor: 'white', borderTop: '1px solid #ddd' }}>
         <input 
           type="text" 
@@ -118,4 +130,4 @@ export default function CommentsPage({ params }) {
 
     </div>
   );
-                                                                               }
+    }
