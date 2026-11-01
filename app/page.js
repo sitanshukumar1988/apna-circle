@@ -32,14 +32,12 @@ export default function Home() {
     fetchData();
   }, [router]);
 
-  // Delete Function
   const handleDelete = async (postId) => {
     if (window.confirm('Kya aap sach me ye post delete karna chahte hain?')) {
       const { error } = await supabase.from('posts').delete().eq('id', postId);
       if (error) {
         alert('Error deleting post: ' + error.message);
       } else {
-        // Feed se post hata do
         setPosts(posts.filter(post => post.id !== postId));
       }
     }
@@ -95,12 +93,11 @@ export default function Home() {
           ) : (
             posts.map((post) => {
               const displayName = post.user_name || post.user_email.split('@')[0];
-              const isOwner = user.email === post.user_email; // Check karo ki ye post tumhari hai ya nahi
+              const isOwner = user.email === post.user_email;
               
               return (
                 <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                   
-                  {/* Post Header */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       {post.user_avatar ? (
@@ -111,12 +108,10 @@ export default function Home() {
                       <span style={{ fontWeight: 'bold', fontSize: '16px', color: '#333' }}>{displayName}</span>
                     </div>
 
-                    {/* Delete Button (Sirf apni post par dikhega) */}
                     {isOwner && (
                       <button 
                         onClick={() => handleDelete(post.id)} 
                         style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#dc3545', padding: '5px' }}
-                        title="Delete Post"
                       >
                         🗑️
                       </button>
@@ -154,7 +149,6 @@ export default function Home() {
         </button>
       </nav>
 
-      {/* Image Popup */}
       {fullImage && (
         <div onClick={() => setFullImage(null)} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
           <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '10px', maxWidth: '90%', maxHeight: '90%', overflow: 'hidden' }}>
@@ -164,4 +158,4 @@ export default function Home() {
       )}
     </div>
   );
-            }
+  }
