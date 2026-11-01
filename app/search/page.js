@@ -5,38 +5,24 @@ import { supabase } from '../../lib/supabase';
 
 export default function Search() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [allUsers, setAllUsers] = useState([]); // Saare users yahan save honge
   const [results, setResults] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [followingList, setFollowingList] = useState([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // 1. Jab page load ho, toh saare users fetch kar lo (Posts table se)
   useEffect(() => {
-    const getUser = async () => {
+    const fetchAllUsers = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUser(user);
-        const { data } = await supabase.from('follows').select('following_id').eq('follower_id', user.id);
-        if (data) setFollowingList(data.map(f => f.following_id));
-      }
-    };
-    getUser();
-  }, []);
+      if (user) setCurrentUser(user);
 
-  useEffect(() => {
-    const searchUsers = async () => {
-      if (searchQuery.trim() === '') {
-        setResults([]);
-        return;
-      }
+      // Saare posts fetch karo
+      const { data, error } = await supabase.from('posts').select('user_id, user_name, user_avatar');
       
-      // Hum POSTS table se naam dhoondh rahe hain (jo 100% kaam karega)
-      const { data, error } = await supabase
-        .from('posts')
-        .select('user_id, user_name, user_avatar')
-        .ilike('user_name', `%${searchQuery}%`);
-
       if (!error && data) {
-        // Duplicate naam hatao (agar ek user ki 2 post hain toh ek hi baar dikhe)
+        // Duplicate users hatao (ek user ki ek hi entry rahe)
         const uniqueUsers = [];
         const map = new Map();
         for (const item of data) {
@@ -49,19 +35,32 @@ export default function Search() {
             });
           }
         }
-        
-        const filtered = uniqueUsers.filter(profile => profile.id !== currentUser?.id);
-        setResults(filtered);
+        setAllUsers(uniqueUsers);
       }
+      setLoading(false);
     };
+    fetchAllUsers();
+  }, []);
 
-    const delayDebounceFn = setTimeout(() => {
-      searchUsers();
-    }, 300);
+  // 2. Jab searchQuery change ho, toh browser me filter karo
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setResults([]);
+      return;
+    }
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery, currentUser]);
+    // Local browser search (Live search)
+    const filtered = allUsers.filter(user => 
+      user.name && user.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    
+    // Apne aap ko search result se hatao
+    const finalResults = filtered.filter(u => u.id !== currentUser?.id);
+    setResults(finalResults);
+    
+  }, [searchQuery, allUsers, currentUser]);
 
+  // 3. Follow/Unfollow handle karo
   const handleFollow = async (targetUserId) => {
     if (!currentUser) return;
     
@@ -73,6 +72,8 @@ export default function Search() {
       setFollowingList([...followingList, targetUserId]);
     }
   };
+
+  if (loading) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading users...</div>;
 
   return (
     <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
@@ -132,4 +133,4 @@ export default function Search() {
 
     </div>
   );
-          }
+}
