@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
 
@@ -8,7 +8,20 @@ export default function Post() {
   const [image, setImage] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [userProfile, setUserProfile] = useState({ name: '', avatar_url: '' }); // Profile save karne ke liye
   const router = useRouter();
+
+  useEffect(() => {
+    // Page load hote hi user ki profile fetch karo
+    const fetchUserProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase.from('profiles').select('name, avatar_url').eq('id', user.id).single();
+        if (data) setUserProfile(data);
+      }
+    };
+    fetchUserProfile();
+  }, []);
 
   const handlePost = async (e) => {
     e.preventDefault();
@@ -21,10 +34,9 @@ export default function Post() {
     setUploading(true);
 
     try {
-      // 1. Cloudinary me photo upload karo (Sahi preset ke saath)
       const formData = new FormData();
       formData.append('file', image);
-      formData.append('upload_preset', 'apna-circle'); // Yahan sahi naam daala hai
+      formData.append('upload_preset', 'apna-circle');
 
       const res = await fetch(`https://api.cloudinary.com/v1_1/pbpkiacn/image/upload`, {
         method: 'POST',
@@ -33,23 +45,21 @@ export default function Post() {
       
       const data = await res.json();
       
-      if (data.error) {
-        throw new Error(data.error.message);
-      }
+      if (data.error) throw new Error(data.error.message);
       
       if (data.secure_url) {
-        // 2. Supabase me save karo
         const { data: { user } } = await supabase.auth.getUser();
         
+        // Supabase me post save karo (naam aur DP ke saath)
         const { error: dbError } = await supabase.from('posts').insert({
           user_email: user.email,
           image_url: data.secure_url,
-          caption: caption
+          caption: caption,
+          user_name: userProfile.name || user.email.split('@')[0], // Naam save karo
+          user_avatar: userProfile.avatar_url || null // DP save karo
         });
 
-        if (dbError) {
-          throw new Error(dbError.message);
-        }
+        if (dbError) throw new Error(dbError.message);
 
         alert('Post uploaded successfully!');
         router.push('/');
@@ -96,12 +106,9 @@ export default function Post() {
         </div>
       )}
 
-      <button 
-        onClick={() => router.push('/')} 
-        style={{ marginTop: '20px', width: '100%', padding: '10px', backgroundColor: 'transparent', color: '#666', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
-      >
+      <button onClick={() => router.push('/')} style={{ marginTop: '20px', width: '100%', padding: '10px', backgroundColor: 'transparent', color: '#666', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
         Back to Home
       </button>
     </div>
   );
-              }
+        }
