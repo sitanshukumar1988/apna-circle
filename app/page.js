@@ -35,11 +35,8 @@ export default function Home() {
   const handleDelete = async (postId) => {
     if (window.confirm('Kya aap sach me ye post delete karna chahte hain?')) {
       const { error } = await supabase.from('posts').delete().eq('id', postId);
-      if (error) {
-        alert('Error deleting post: ' + error.message);
-      } else {
-        setPosts(posts.filter(post => post.id !== postId));
-      }
+      if (error) alert('Error: ' + error.message);
+      else setPosts(posts.filter(post => post.id !== postId));
     }
   };
 
@@ -98,12 +95,12 @@ export default function Home() {
               return (
                 <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                   
-                  {/* Post Header: DP + Name (Click karne par profile khulegi) */}
-                  <div 
-                    onClick={() => router.push(`/user/${encodeURIComponent(post.user_email)}`)}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #eee', cursor: 'pointer' }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {/* Header - ID se profile par jaayega */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
+                    <div 
+                      onClick={() => router.push(`/user/${post.user_id}`)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+                    >
                       {post.user_avatar ? (
                         <img src={post.user_avatar} alt="Profile" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} />
                       ) : (
@@ -113,12 +110,7 @@ export default function Home() {
                     </div>
 
                     {isOwner && (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleDelete(post.id); }} 
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#dc3545', padding: '5px' }}
-                      >
-                        🗑️
-                      </button>
+                      <button onClick={() => handleDelete(post.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#dc3545', padding: '5px' }}>🗑️</button>
                     )}
                   </div>
 
@@ -162,4 +154,4 @@ export default function Home() {
       )}
     </div>
   );
-                   }
+      }
