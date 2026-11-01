@@ -81,20 +81,26 @@ export default function Home() {
             </div>
           ) : (
             posts.map((post) => {
-              // Direct post wala data use karo
+              // Gemini wala logic yahan apply kiya hai
               const displayName = post.user_name || post.user_email.split('@')[0];
               
               return (
                 <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                   
-                  {/* User Info Header */}
-                  <div style={{ padding: '10px 15px', borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {/* Post Header: DP + Name */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
                     {post.user_avatar ? (
-                      <img src={post.user_avatar} alt="DP" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} />
+                      <img 
+                        src={post.user_avatar} 
+                        alt="Profile" 
+                        style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} 
+                      />
                     ) : (
                       <div style={{ width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>👤</div>
                     )}
-                    <span style={{ fontWeight: 'bold', fontSize: '15px' }}>{displayName}</span>
+                    <span style={{ fontWeight: 'bold', fontSize: '16px', color: '#333' }}>
+                      {displayName}
+                    </span>
                   </div>
 
                   <img 
@@ -145,4 +151,4 @@ export default function Home() {
       )}
     </div>
   );
-                   }
+}
