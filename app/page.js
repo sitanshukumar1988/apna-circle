@@ -68,7 +68,6 @@ export default function Home() {
     fetchData();
   }, [router]);
 
-  // Menu ke bahar click karne par menu band karo
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (!e.target.closest('.menu-container')) {
@@ -144,7 +143,6 @@ export default function Home() {
     setShowMenu(null);
   };
 
-  // Share Function
   const handleShare = async (postId) => {
     const postLink = `${window.location.origin}/post/${postId}`;
     if (navigator.share) {
@@ -170,8 +168,8 @@ export default function Home() {
   };
 
   const t = {
-    en: { title: "Apna Circle", feed: "Your Feed", noPosts: "No posts yet.", home: "Home", search: "Search", post: "Post", profile: "Profile", like: "Like", comment: "Comment" },
-    hi: { title: "अपना सर्कल", feed: "आपकी फीड", noPosts: "अभी कोई पोस्ट नहीं है।", home: "होम", search: "खोजें", post: "पोस्ट", profile: "प्रोफाइल", like: "लाइक", comment: "कमेंट" }
+    en: { title: "Apna Circle", feed: "Your Feed", noPosts: "No posts yet.", home: "Home", search: "Search", connections: "Connections", post: "Post", profile: "Profile", like: "Like", comment: "Comment" },
+    hi: { title: "अपना सर्कल", feed: "आपकी फीड", noPosts: "अभी कोई पोस्ट नहीं है।", home: "होम", search: "खोजें", connections: "कनेक्शन", post: "पोस्ट", profile: "प्रोफाइल", like: "लाइक", comment: "कमेंट" }
   };
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#0070f3', color: 'white' }}><h1>Loading...</h1></div>;
@@ -211,7 +209,6 @@ export default function Home() {
               return (
                 <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                   
-                  {/* Post Header */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
                     <div onClick={() => router.push(`/user/${post.user_id}`)} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
                       {post.user_avatar ? (
@@ -222,7 +219,6 @@ export default function Home() {
                       <span style={{ fontWeight: 'bold' }}>{displayName}</span>
                     </div>
                     
-                    {/* 3 Dots Menu */}
                     <div className="menu-container" style={{ position: 'relative' }}>
                       <button 
                         onClick={(e) => { e.stopPropagation(); setShowMenu(showMenu === post.id ? null : post.id); }} 
@@ -248,7 +244,6 @@ export default function Home() {
 
                   <img src={post.image_url} alt="Post" onClick={() => setFullImage(post.image_url)} style={{ width: '100%', height: 'auto', maxHeight: '500px', objectFit: 'cover', display: 'block', cursor: 'pointer' }} />
                   
-                  {/* Action Bar */}
                   <div style={{ padding: '10px 15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee' }}>
                     <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                       <div onClick={() => router.push(`/likes/${String(post.id)}`)} style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '15px', color: '#666' }}>
@@ -268,7 +263,6 @@ export default function Home() {
                     )}
                   </div>
 
-                  {/* Like/Reaction Buttons */}
                   <div style={{ display: 'flex', borderBottom: '1px solid #eee', position: 'relative' }}>
                     <button 
                       onClick={() => setShowReactionPicker(showReactionPicker === post.id ? null : post.id)} 
@@ -307,9 +301,11 @@ export default function Home() {
         </div>
       </main>
 
+      {/* Bottom Navigation with Connections */}
       <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '15px 0', position: 'sticky', bottom: 0 }}>
         <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3' }}><span style={{ fontSize: '20px' }}>🏠</span><span style={{ fontSize: '12px' }}>{t[lang].home}</span></button>
         <button onClick={() => router.push('/search')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}><span style={{ fontSize: '20px' }}>🔍</span><span style={{ fontSize: '12px' }}>{t[lang].search}</span></button>
+        <button onClick={() => router.push('/connections')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}><span style={{ fontSize: '20px' }}>👥</span><span style={{ fontSize: '12px' }}>{t[lang].connections}</span></button>
         <button onClick={() => router.push('/post')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}><span style={{ fontSize: '20px' }}>➕</span><span style={{ fontSize: '12px' }}>{t[lang].post}</span></button>
         <button onClick={() => router.push('/profile')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}><span style={{ fontSize: '20px' }}>👤</span><span style={{ fontSize: '12px' }}>{t[lang].profile}</span></button>
       </nav>
@@ -327,4 +323,4 @@ export default function Home() {
 
     </div>
   );
-}
+          }
