@@ -5,14 +5,14 @@ import { supabase } from '../../lib/supabase';
 
 export default function Search() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [allUsers, setAllUsers] = useState([]); // Saare users yahan save honge
+  const [allUsers, setAllUsers] = useState([]);
   const [results, setResults] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [followingList, setFollowingList] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // 1. Jab page load ho, toh saare users fetch kar lo (Posts table se)
+  // 1. Page load hote hi saare users fetch karo (posts se)
   useEffect(() => {
     const fetchAllUsers = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -22,7 +22,7 @@ export default function Search() {
       const { data, error } = await supabase.from('posts').select('user_id, user_name, user_avatar');
       
       if (!error && data) {
-        // Duplicate users hatao (ek user ki ek hi entry rahe)
+        // Duplicate users hatao
         const uniqueUsers = [];
         const map = new Map();
         for (const item of data) {
@@ -42,25 +42,25 @@ export default function Search() {
     fetchAllUsers();
   }, []);
 
-  // 2. Jab searchQuery change ho, toh browser me filter karo
+  // 2. Search query change hone par browser me filter karo
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setResults([]);
       return;
     }
 
-    // Local browser search (Live search)
+    // Browser me hi naam search karo (Live search)
     const filtered = allUsers.filter(user => 
       user.name && user.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
     
-    // Apne aap ko search result se hatao
+    // Apne aap ko hatao
     const finalResults = filtered.filter(u => u.id !== currentUser?.id);
     setResults(finalResults);
     
   }, [searchQuery, allUsers, currentUser]);
 
-  // 3. Follow/Unfollow handle karo
+  // 3. Follow/Unfollow
   const handleFollow = async (targetUserId) => {
     if (!currentUser) return;
     
@@ -133,4 +133,4 @@ export default function Search() {
 
     </div>
   );
-}
+  }
