@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase';
 
 export default function Connections() {
   const [user, setUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('followers'); // followers ya following
+  const [activeTab, setActiveTab] = useState('followers');
   const [followers, setFollowers] = useState([]);
   const [following, setFollowing] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,7 +17,6 @@ export default function Connections() {
       if (!user) { router.push('/login'); return; }
       setUser(user);
 
-      // 1. Fetch logon ko jo mujhe follow karte hain (Followers)
       const { data: followersData } = await supabase
         .from('follows')
         .select('follower_id')
@@ -29,7 +28,6 @@ export default function Connections() {
         if (profiles) setFollowers(profiles);
       }
 
-      // 2. Fetch logon ko main follow karta hu (Following)
       const { data: followingData } = await supabase
         .from('follows')
         .select('following_id')
@@ -49,7 +47,7 @@ export default function Connections() {
   if (loading) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
 
   return (
-    <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
+    <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f0f2f5', paddingBottom: '80px' }}>
       
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
@@ -57,7 +55,7 @@ export default function Connections() {
         <h1 style={{ fontSize: '20px', fontWeight: 'bold' }}>My Connections</h1>
       </div>
 
-      {/* Tabs (Followers / Following) */}
+      {/* Tabs */}
       <div style={{ display: 'flex', backgroundColor: 'white', borderRadius: '10px', overflow: 'hidden', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
         <button 
           onClick={() => setActiveTab('followers')} 
@@ -108,6 +106,26 @@ export default function Connections() {
         )}
       </div>
 
+      {/* Bottom Navigation Bar */}
+      <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '15px 0', position: 'fixed', bottom: 0, left: 0, width: '100%' }}>
+        <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
+          <span style={{ fontSize: '20px' }}>🏠</span>
+          <span style={{ fontSize: '12px' }}>Home</span>
+        </button>
+        <button onClick={() => router.push('/search')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
+          <span style={{ fontSize: '20px' }}>🔍</span>
+          <span style={{ fontSize: '12px' }}>Search</span>
+        </button>
+        <button onClick={() => router.push('/connections')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3' }}>
+          <span style={{ fontSize: '20px' }}>👥</span>
+          <span style={{ fontSize: '12px' }}>Connections</span>
+        </button>
+        <button onClick={() => router.push('/profile')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
+          <span style={{ fontSize: '20px' }}>👤</span>
+          <span style={{ fontSize: '12px' }}>Profile</span>
+        </button>
+      </nav>
+
     </div>
   );
-          }
+    }
