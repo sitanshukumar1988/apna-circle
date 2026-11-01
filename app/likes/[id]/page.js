@@ -8,25 +8,31 @@ export default function LikesPage({ params }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   
-  // URL se ID nikal rahe hain
   const postId = params.id;
 
   useEffect(() => {
     const fetchLikes = async () => {
+      // 1. Pehle check karo ki user logged in hai ya nahi
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/login');
+        return;
+      }
+
       if (!postId) {
         setLoading(false);
         return;
       }
 
       try {
-        // Supabase se likes fetch karo is post id ke liye
+        // 2. Ab data fetch karo (User logged in hai, toh database data dega)
         const { data: likesData, error } = await supabase
           .from('likes')
           .select('*')
           .eq('post_id', postId);
         
         if (error) {
-          console.log("Error fetching likes:", error);
+          console.log("Error:", error);
         }
 
         if (likesData) {
@@ -39,7 +45,7 @@ export default function LikesPage({ params }) {
       }
     };
     fetchLikes();
-  }, [postId]);
+  }, [postId, router]);
 
   if (loading) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading Likes...</div>;
 
@@ -50,11 +56,6 @@ export default function LikesPage({ params }) {
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
         <button onClick={() => router.back()} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '15px' }}>←</button>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold' }}>Likes ({likes.length})</h1>
-      </div>
-
-      {/* Debug Info (Tumhare liye ki ID kya aa rahi hai) */}
-      <div style={{ fontSize: '12px', color: 'gray', marginBottom: '10px', textAlign: 'center' }}>
-        Checking Likes for Post ID: {postId}
       </div>
 
       {/* Likes List */}
@@ -77,4 +78,4 @@ export default function LikesPage({ params }) {
 
     </div>
   );
-}
+        }
