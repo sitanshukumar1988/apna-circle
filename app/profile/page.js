@@ -62,6 +62,7 @@ export default function Profile() {
       setImageSrc(null); 
       uploadToCloudinary(croppedImage);
     } catch (e) {
+      alert("Crop Error: " + e.message);
       console.error(e);
     }
   };
