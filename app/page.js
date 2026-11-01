@@ -35,8 +35,11 @@ export default function Home() {
   const handleDelete = async (postId) => {
     if (window.confirm('Kya aap sach me ye post delete karna chahte hain?')) {
       const { error } = await supabase.from('posts').delete().eq('id', postId);
-      if (error) alert('Error: ' + error.message);
-      else setPosts(posts.filter(post => post.id !== postId));
+      if (error) {
+        alert('Error deleting post: ' + error.message);
+      } else {
+        setPosts(posts.filter(post => post.id !== postId));
+      }
     }
   };
 
@@ -95,7 +98,7 @@ export default function Home() {
               return (
                 <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                   
-                  {/* Header - ID se profile par jaayega */}
+                  {/* Post Header: DP + Name (Click se Profile khulega) */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
                     <div 
                       onClick={() => router.push(`/user/${post.user_id}`)}
@@ -154,4 +157,4 @@ export default function Home() {
       )}
     </div>
   );
-      }
+         }
