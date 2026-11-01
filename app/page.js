@@ -190,7 +190,8 @@ export default function Home() {
   if (!user) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Redirecting...</div>;
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f0f2f5', paddingBottom: '70px' }}>
+    // Gemini ka solution: display: flex hata diya aur padding bottom badha di
+    <div style={{ minHeight: '100vh', backgroundColor: '#f0f2f5', paddingBottom: '80px' }}>
       
       <header style={{ backgroundColor: '#0070f3', padding: '15px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>{t[lang].title}</h1>
@@ -320,7 +321,8 @@ export default function Home() {
         </div>
       </main>
 
-      <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '10px 0', position: 'fixed', bottom: 0, left: 0, width: '100%', zIndex: 1000, boxShadow: '0 -1px 5px rgba(0,0,0,0.1)' }}>
+      {/* Bottom Nav - Gemini ke bataaye tarike se style kiya gaya hai */}
+      <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '10px 0', position: 'fixed', bottom: 0, left: 0, width: '100%', zIndex: 9999, boxShadow: '0 -1px 5px rgba(0,0,0,0.1)' }}>
         <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3' }}><span style={{ fontSize: '20px' }}>🏠</span><span style={{ fontSize: '12px' }}>{t[lang].home}</span></button>
         <button onClick={() => router.push('/search')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}><span style={{ fontSize: '20px' }}>🔍</span><span style={{ fontSize: '12px' }}>{t[lang].search}</span></button>
         <button onClick={() => router.push('/connections')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}><span style={{ fontSize: '20px' }}>👥</span><span style={{ fontSize: '12px' }}>{t[lang].connections}</span></button>
@@ -332,5 +334,4 @@ export default function Home() {
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 2000 }}>
           <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 2001 }}>✕</button>
           <TransformWrapper>
-            <TransformComponent wrapperStyle={{ width: "100vw", height: "100vh" }} contentStyle={{ width: "100%", height: "100%" }}>
-              <img src={fullImage} alt="Full Post" style={{ width: '100%', height: '100%', 
+            <TransformComponent wrapperStyle={{ width: "100vw", height
