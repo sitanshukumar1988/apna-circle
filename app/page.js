@@ -154,27 +154,27 @@ export default function Home() {
                   {/* LinkedIn Style Action Bar */}
                   <div style={{ padding: '10px 15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee' }}>
                     
-                    {/* Left Side: Counts */}
+                    {/* Left Side: Counts (Yahan String(post.id) use kiya hai) */}
                     <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                       <div 
-                        onClick={() => router.push(`/likes/${post.id}`)}
+                        onClick={() => router.push(`/likes/${String(post.id)}`)}
                         style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '15px', color: '#666' }}
                       >
                         <span style={{ fontSize: '18px' }}>👍</span> {postLikes}
                       </div>
                       
                       <div 
-                        onClick={() => router.push(`/comments/${post.id}`)}
+                        onClick={() => router.push(`/comments/${String(post.id)}`)}
                         style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '15px', color: '#666' }}
                       >
                         <span style={{ fontSize: '18px' }}>💬</span> {postComments.length}
                       </div>
                     </div>
 
-                    {/* Right Side: Reaction Icons */}
+                    {/* Right Side: Reaction Icons (Yahan bhi String(post.id) use kiya hai) */}
                     {postLikes > 0 && (
                       <div 
-                        onClick={() => router.push(`/likes/${post.id}`)}
+                        onClick={() => router.push(`/likes/${String(post.id)}`)}
                         style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
                       >
                         <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#0a66c2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '-6px', zIndex: 3, border: '2px solid white' }}>
@@ -195,7 +195,7 @@ export default function Home() {
                     <button onClick={() => handleLike(post.id)} style={{ flex: 1, padding: '10px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', color: hasLiked ? '#dc3545' : '#666', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px' }}>
                       {hasLiked ? '❤️ Liked' : '🤍 Like'}
                     </button>
-                    <button onClick={() => router.push(`/comments/${post.id}`)} style={{ flex: 1, padding: '10px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', color: '#666', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px' }}>
+                    <button onClick={() => router.push(`/comments/${String(post.id)}`)} style={{ flex: 1, padding: '10px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', color: '#666', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px' }}>
                       💬 Comment
                     </button>
                   </div>
@@ -246,4 +246,4 @@ export default function Home() {
 
     </div>
   );
-  }
+    }
