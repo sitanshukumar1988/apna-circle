@@ -29,15 +29,28 @@ export default function Search() {
         return;
       }
       
-      // Direct Profiles table se search kar rahe hain
+      // Hum POSTS table se naam dhoondh rahe hain (jo 100% kaam karega)
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .ilike('name', `%${searchQuery}%`)
-        .limit(10);
+        .from('posts')
+        .select('user_id, user_name, user_avatar')
+        .ilike('user_name', `%${searchQuery}%`);
 
       if (!error && data) {
-        const filtered = data.filter(profile => profile.id !== currentUser?.id);
+        // Duplicate naam hatao (agar ek user ki 2 post hain toh ek hi baar dikhe)
+        const uniqueUsers = [];
+        const map = new Map();
+        for (const item of data) {
+          if (!map.has(item.user_id)) {
+            map.set(item.user_id, true);
+            uniqueUsers.push({
+              id: item.user_id,
+              name: item.user_name,
+              avatar_url: item.user_avatar
+            });
+          }
+        }
+        
+        const filtered = uniqueUsers.filter(profile => profile.id !== currentUser?.id);
         setResults(filtered);
       }
     };
@@ -91,7 +104,7 @@ export default function Search() {
                 <div style={{ width: '45px', height: '45px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>👤</div>
               )}
               <div>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>{profile.name || 'User'}</h3>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>{profile.name}</h3>
               </div>
             </div>
 
@@ -119,4 +132,4 @@ export default function Search() {
 
     </div>
   );
-}
+          }
