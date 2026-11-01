@@ -207,7 +207,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Content - Padding Bottom added */}
       <main style={{ flex: 1, padding: '20px', paddingBottom: '100px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <div style={{ width: '100%', maxWidth: '500px' }}>
           
@@ -336,4 +335,4 @@ export default function Home() {
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 1000 }}>
           <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 1001 }}>✕</button>
           <TransformWrapper>
-            
+            <TransformComponent wrapperStyle={{ width: "100vw"
