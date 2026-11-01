@@ -2,10 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
+/* App Zoom Disable */
+html, body {
+  touch-action: pan-x pan-y; /* Sirf scroll allow karega, zoom nahi */
+  -webkit-text-size-adjust: 100%; /* Text auto-adjust band */
+  overflow-x: hidden; /* Side scroll band */
+  margin: 0;
+  padding: 0;
   font-family: Arial, sans-serif;
   background-color: #f3f4f6;
   color: #333;
-  margin: 0;
-  padding: 0;
 }
