@@ -30,7 +30,6 @@ export default function Profile() {
       if (data) {
         setProfile(data);
       } else {
-        // Agar naya user hai, toh email set karke rakho
         setProfile(prev => ({ ...prev, email: user.email }));
       }
     };
@@ -83,7 +82,7 @@ export default function Profile() {
     setSaving(true);
     const { error } = await supabase.from('profiles').upsert({
       id: user.id, 
-      email: user.email, // Feed me naam dikhane ke liye email save kar rahe hain
+      email: user.email, 
       name: profile.name,
       bio: profile.bio,
       city: profile.city,
@@ -102,7 +101,6 @@ export default function Profile() {
 
   if (!user) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
 
-  // Crop Screen
   if (imageSrc) {
     return (
       <div style={{ position: 'relative', width: '100vw', height: '100vh', background: '#333' }}>
@@ -126,7 +124,6 @@ export default function Profile() {
     );
   }
 
-  // DP Popup (Modal) - Beech me khulega
   if (showFullImage && profile.avatar_url) {
     return (
       <div onClick={() => setShowFullImage(false)} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
@@ -178,4 +175,4 @@ export default function Profile() {
       </button>
     </div>
   );
-}
+  }
