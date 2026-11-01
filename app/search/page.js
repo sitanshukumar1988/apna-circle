@@ -7,7 +7,7 @@ export default function Search() {
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
-  const [followingList, setFollowingList] = useState([]); // Kis-kis ko follow kar rahe hain
+  const [followingList, setFollowingList] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -15,7 +15,6 @@ export default function Search() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setCurrentUser(user);
-        // Jo pehle se follow kar rahe hain unki list nikaalo
         const { data } = await supabase.from('follows').select('following_id').eq('follower_id', user.id);
         if (data) setFollowingList(data.map(f => f.following_id));
       }
@@ -23,7 +22,6 @@ export default function Search() {
     getUser();
   }, []);
 
-  // Live Search Function
   useEffect(() => {
     const searchUsers = async () => {
       if (searchQuery.trim() === '') {
@@ -31,21 +29,23 @@ export default function Search() {
         return;
       }
       
-      // Profiles table me naam se search karo (case-insensitive)
+      // Name YA Email dono se search karo
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .ilike('name', `%${searchQuery}%`) // 'ilike' matlab case-insensitive search
+        .or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
         .limit(10);
 
+      if (error) {
+        console.log("Search Error:", error);
+      }
+
       if (!error && data) {
-        // Apne aap ko search result me se hata do
         const filtered = data.filter(profile => profile.id !== currentUser?.id);
         setResults(filtered);
       }
     };
 
-    // Thoda wait karke search karo (debounce) taaki har letter par network call na jaye
     const delayDebounceFn = setTimeout(() => {
       searchUsers();
     }, 300);
@@ -57,11 +57,9 @@ export default function Search() {
     if (!currentUser) return;
     
     if (followingList.includes(targetUserId)) {
-      // Unfollow karo
       await supabase.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', targetUserId);
       setFollowingList(followingList.filter(id => id !== targetUserId));
     } else {
-      // Follow karo
       await supabase.from('follows').insert({ follower_id: currentUser.id, following_id: targetUserId });
       setFollowingList([...followingList, targetUserId]);
     }
@@ -70,27 +68,23 @@ export default function Search() {
   return (
     <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
       
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
         <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '15px' }}>←</button>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold' }}>Search Users</h1>
       </div>
 
-      {/* Search Bar */}
       <input 
         type="text" 
-        placeholder="Search by name (e.g. Sita...)" 
+        placeholder="Search by name or email..." 
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ccc', fontSize: '16px', marginBottom: '20px', boxSizing: 'border-box' }}
       />
 
-      {/* Search Results */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         {results.map((profile) => (
           <div key={profile.id} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             
-            {/* User Info (Click karne par profile khulegi) */}
             <div 
               onClick={() => router.push(`/user/${profile.id}`)}
               style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
@@ -101,12 +95,11 @@ export default function Search() {
                 <div style={{ width: '45px', height: '45px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>👤</div>
               )}
               <div>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>{profile.name}</h3>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>{profile.name || 'User'}</h3>
                 <p style={{ margin: 0, fontSize: '13px', color: '#666' }}>{profile.bio || 'No bio'}</p>
               </div>
             </div>
 
-            {/* Follow Button */}
             <button 
               onClick={() => handleFollow(profile.id)}
               style={{ 
