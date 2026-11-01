@@ -2,12 +2,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 export default function UserProfile({ params }) {
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   
+  // Zoom ke liye states
   const [showFullImage, setShowFullImage] = useState(false);
   const [fullImageUrl, setFullImageUrl] = useState(null);
   
@@ -48,7 +50,7 @@ export default function UserProfile({ params }) {
   return (
     <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
       
-      {/* Header with Back Button */}
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
         <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '15px' }}>←</button>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold' }}>{profile?.name || 'Profile'}</h1>
@@ -85,28 +87,18 @@ export default function UserProfile({ params }) {
         ))}
       </div>
 
-      {/* Full Image Popup with Close Button */}
+      {/* Full Image Popup with Zoom (Pinch to Zoom) */}
       {showFullImage && (
-        <div 
-          style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}
-        >
-          {/* Close Button (X) */}
-          <button 
-            onClick={() => setShowFullImage(false)} 
-            style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
-            ✕
-          </button>
-
-          {/* Full Image */}
-          <img 
-            src={fullImageUrl} 
-            alt="Full" 
-            style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain', borderRadius: '5px' }} 
-          />
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 1000 }}>
+          <button onClick={() => setShowFullImage(false)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 1001 }}>✕</button>
+          <TransformWrapper>
+            <TransformComponent wrapperStyle={{ width: "100vw", height: "100vh" }} contentStyle={{ width: "100%", height: "100%" }}>
+              <img src={fullImageUrl} alt="Full" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            </TransformComponent>
+          </TransformWrapper>
         </div>
       )}
 
     </div>
   );
-  }
+          }
