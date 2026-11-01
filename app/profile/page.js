@@ -183,6 +183,16 @@ export default function Profile() {
         </label>
       </div>
 
+      {/* My Connections Button */}
+      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+        <button 
+          onClick={() => router.push('/connections')} 
+          style={{ padding: '10px 20px', backgroundColor: '#333', color: 'white', border: 'none', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer' }}
+        >
+          👥 My Connections
+        </button>
+      </div>
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         <input placeholder="Your Name" value={profile.name || ''} onChange={(e) => setProfile({ ...profile, name: e.target.value })} style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }} />
         <textarea placeholder="Bio (e.g. Fitness lover)" value={profile.bio || ''} onChange={(e) => setProfile({ ...profile, bio: e.target.value })} rows="3" style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }} />
@@ -202,4 +212,4 @@ export default function Profile() {
       </button>
     </div>
   );
-}
+                                          }
