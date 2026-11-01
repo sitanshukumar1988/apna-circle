@@ -101,6 +101,7 @@ export default function Profile() {
 
   if (!user) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
 
+  // Crop Screen
   if (imageSrc) {
     return (
       <div style={{ position: 'relative', width: '100vw', height: '100vh', background: '#333' }}>
@@ -124,16 +125,29 @@ export default function Profile() {
     );
   }
 
+  // DP Full Image View (With Close Button)
   if (showFullImage && profile.avatar_url) {
     return (
-      <div onClick={() => setShowFullImage(false)} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
-        <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '10px', maxWidth: '90%', maxHeight: '90%', overflow: 'hidden' }}>
-          <img src={profile.avatar_url} alt="Full DP" style={{ width: '100%', height: 'auto', maxHeight: '80vh', objectFit: 'contain', borderRadius: '5px' }} />
+      <div 
+        style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}
+      >
+        <button 
+          onClick={() => setShowFullImage(false)} 
+          style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1001 }}
+        >
+          ✕
+        </button>
+        <div 
+          onClick={() => setShowFullImage(false)} 
+          style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '100%' }}
+        >
+          <img src={profile.avatar_url} alt="Full DP" style={{ maxWidth: '90%', maxHeight: '80vh', objectFit: 'contain', borderRadius: '5px' }} />
         </div>
       </div>
     );
   }
 
+  // Main Profile Page
   return (
     <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
       <h1 style={{ textAlign: 'center', marginBottom: '20px' }}>My Profile</h1>
@@ -175,4 +189,4 @@ export default function Profile() {
       </button>
     </div>
   );
-         }
+    }
