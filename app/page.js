@@ -196,7 +196,6 @@ export default function Home() {
         <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>{t[lang].title}</h1>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           
-          {/* Notification Bell - Yahan hai */}
           <button onClick={() => router.push('/notifications')} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '20px', marginRight: '15px' }}>
             🔔
           </button>
@@ -334,4 +333,4 @@ export default function Home() {
           <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 2001 }}>✕</button>
           <TransformWrapper>
             <TransformComponent wrapperStyle={{ width: "100vw", height: "100vh" }} contentStyle={{ width: "100%", height: "100%" }}>
-              <img src={fullImage} alt="Ful
+              <img src={fullImage} alt="Full Post" style={{ width: '100%', height: '100%', 
