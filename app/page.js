@@ -155,16 +155,16 @@ export default function Home() {
                       {hasLiked ? '❤️' : '🤍'} {postLikes} {t[lang].like}
                     </button>
                     
-                    {/* Comment Button (Ab naye page par le jayega) */}
                     <button onClick={() => router.push(`/comments/${post.id}`)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
                       💬 {postComments.length} {t[lang].comment}
                     </button>
                   </div>
 
+                  {/* Liked by text (Click karne par naya page khulega) */}
                   {postLikes > 0 && (
                     <div 
-                      onClick={() => setShowLikesModal(post.id)}
-                      style={{ padding: '0 15px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer', color: '#333' }}
+                      onClick={() => router.push(`/likes/${post.id}`)}
+                      style={{ padding: '10px 15px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer', color: '#333' }}
                     >
                       Liked by {postLikesArray[0]?.user_name} {postLikes > 1 ? `and ${postLikes - 1} others` : ''}
                     </div>
@@ -211,29 +211,6 @@ export default function Home() {
         </div>
       )}
 
-      {showLikesModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1002, padding: '20px' }}>
-          <div style={{ backgroundColor: 'white', borderRadius: '10px', width: '100%', maxWidth: '400px', maxHeight: '80vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '15px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: '18px' }}>{t[lang].likedBy} ({likesData[showLikesModal]?.length || 0})</h3>
-              <button onClick={() => setShowLikesModal(null)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#666' }}>✕</button>
-            </div>
-            <div style={{ padding: '15px', overflowY: 'auto' }}>
-              {likesData[showLikesModal]?.map((like, index) => (
-                <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-                  {like.user_avatar ? (
-                    <img src={like.user_avatar} alt="DP" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
-                  ) : (
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>👤</div>
-                  )}
-                  <span style={{ fontWeight: 'bold', fontSize: '16px' }}>{like.user_name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
-                           }
+  }
