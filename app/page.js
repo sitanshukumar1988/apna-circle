@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/navigation';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import Loader from './components/Loader'; // Loader import kiya
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -172,7 +173,9 @@ export default function Home() {
     hi: { title: "अपना सर्कल", feed: "आपकी फीड", noPosts: "अभी कोई पोस्ट नहीं है।", home: "होम", search: "खोजें", connections: "कनेक्शन", post: "पोस्ट", profile: "प्रोफाइल", like: "लाइक", comment: "कमेंट" }
   };
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#0070f3', color: 'white' }}><h1>Loading...</h1></div>;
+  // Yahan Loader use kiya hai
+  if (loading) return <Loader />;
+  
   if (!user) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Redirecting...</div>;
 
   return (
@@ -301,7 +304,6 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Bottom Navigation with Connections */}
       <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '15px 0', position: 'sticky', bottom: 0 }}>
         <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3' }}><span style={{ fontSize: '20px' }}>🏠</span><span style={{ fontSize: '12px' }}>{t[lang].home}</span></button>
         <button onClick={() => router.push('/search')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}><span style={{ fontSize: '20px' }}>🔍</span><span style={{ fontSize: '12px' }}>{t[lang].search}</span></button>
@@ -323,4 +325,4 @@ export default function Home() {
 
     </div>
   );
-          }
+      }
