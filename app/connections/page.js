@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
+import Loader from '../components/Loader';
 
 export default function Connections() {
   const [user, setUser] = useState(null);
@@ -44,18 +45,16 @@ export default function Connections() {
     fetchConnections();
   }, [router]);
 
-  if (loading) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
+  if (loading) return <Loader />;
 
   return (
     <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f0f2f5', paddingBottom: '80px' }}>
       
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
         <button onClick={() => router.push('/profile')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '15px' }}>←</button>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold' }}>My Connections</h1>
       </div>
 
-      {/* Tabs */}
       <div style={{ display: 'flex', backgroundColor: 'white', borderRadius: '10px', overflow: 'hidden', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
         <button 
           onClick={() => setActiveTab('followers')} 
@@ -71,7 +70,6 @@ export default function Connections() {
         </button>
       </div>
 
-      {/* List Area */}
       <div style={{ backgroundColor: 'white', borderRadius: '10px', padding: '15px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
         {activeTab === 'followers' ? (
           followers.length === 0 ? <p style={{ textAlign: 'center', color: '#666' }}>No followers yet.</p> :
@@ -106,7 +104,6 @@ export default function Connections() {
         )}
       </div>
 
-      {/* Bottom Navigation Bar */}
       <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '15px 0', position: 'fixed', bottom: 0, left: 0, width: '100%' }}>
         <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
           <span style={{ fontSize: '20px' }}>🏠</span>
@@ -128,4 +125,4 @@ export default function Connections() {
 
     </div>
   );
-    }
+}
