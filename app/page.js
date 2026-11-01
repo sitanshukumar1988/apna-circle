@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/navigation';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import Loader from './components/Loader'; // Loader import kiya
+import Loader from './components/Loader';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -112,6 +112,19 @@ export default function Home() {
         ...prev,
         [postId]: [...(prev[postId] || []), { user_id: user.id, user_name: userName, user_avatar: userAvatar, reaction_type: reactionType }]
       }));
+
+      // Notification Bhejo
+      const { data: postData } = await supabase.from('posts').select('user_id').eq('id', postId).single();
+      if (postData && postData.user_id !== user.id) {
+        await supabase.from('notifications').insert({
+          user_id: postData.user_id,
+          sender_id: user.id,
+          sender_name: userName,
+          sender_avatar: userAvatar,
+          type: 'like',
+          post_id: postId
+        });
+      }
     }
     setShowReactionPicker(null);
   };
@@ -173,17 +186,22 @@ export default function Home() {
     hi: { title: "अपना सर्कल", feed: "आपकी फीड", noPosts: "अभी कोई पोस्ट नहीं है।", home: "होम", search: "खोजें", connections: "कनेक्शन", post: "पोस्ट", profile: "प्रोफाइल", like: "लाइक", comment: "कमेंट" }
   };
 
-  // Yahan Loader use kiya hai
   if (loading) return <Loader />;
-  
   if (!user) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Redirecting...</div>;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
       
+      {/* Header with Bell Icon */}
       <header style={{ backgroundColor: '#0070f3', padding: '15px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>{t[lang].title}</h1>
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          
+          {/* Notification Bell */}
+          <button onClick={() => router.push('/notifications')} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '20px', marginRight: '15px' }}>
+            🔔
+          </button>
+
           <button onClick={() => changeLanguage('en')} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', marginRight: '10px' }}>EN</button>
           <button onClick={() => changeLanguage('hi')} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>HI</button>
         </div>
@@ -317,12 +335,4 @@ export default function Home() {
           <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 1001 }}>✕</button>
           <TransformWrapper>
             <TransformComponent wrapperStyle={{ width: "100vw", height: "100vh" }} contentStyle={{ width: "100%", height: "100%" }}>
-              <img src={fullImage} alt="Full Post" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-            </TransformComponent>
-          </TransformWrapper>
-        </div>
-      )}
-
-    </div>
-  );
-      }
+              <img src={fullImage} alt="Full Post" style={{ width: '100%', height: '100%', objectFit: 'contain
