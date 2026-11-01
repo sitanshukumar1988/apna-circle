@@ -8,71 +8,44 @@ export default function Search() {
   const [allUsers, setAllUsers] = useState([]);
   const [results, setResults] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
-  const [followingList, setFollowingList] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // 1. Saare users fetch karo (Posts se)
+  // 1. Page load hote hi saare users fetch karo
   useEffect(() => {
     const fetchAllUsers = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) setCurrentUser(user);
 
-      const { data, error } = await supabase
-        .from('posts')
-        .select('user_id, user_name, user_avatar');
+      // Saare profiles fetch karo (naam aur DP ke liye)
+      const { data, error } = await supabase.from('profiles').select('id, name, avatar_url');
       
       if (!error && data) {
-        // Duplicate users hatao
-        const uniqueUsers = [];
-        const map = new Map();
-        for (const item of data) {
-          if (item.user_id && !map.has(item.user_id)) {
-            map.set(item.user_id, true);
-            uniqueUsers.push({
-              id: item.user_id,
-              name: item.user_name || 'User',
-              avatar_url: item.user_avatar
-            });
-          }
-        }
-        setAllUsers(uniqueUsers);
+        setAllUsers(data);
       }
       setLoading(false);
     };
     fetchAllUsers();
   }, []);
 
-  // 2. Live Search (Browser me filter)
+  // 2. Live Search (Browser me filter hoga)
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setResults([]);
       return;
     }
 
-    // Browser me filter karo (Apne aap ko bhi dikhao)
     const filtered = allUsers.filter(user => 
       user.name && user.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
     
-    setResults(filtered);
+    // Apne aap ko result me se hata do
+    const finalResults = filtered.filter(u => u.id !== currentUser?.id);
+    setResults(finalResults);
     
-  }, [searchQuery, allUsers]);
+  }, [searchQuery, allUsers, currentUser]);
 
-  // 3. Follow/Unfollow (Agar khud ko follow na kar sake, toh button hide karenge)
-  const handleFollow = async (targetUserId) => {
-    if (!currentUser || targetUserId === currentUser.id) return;
-    
-    if (followingList.includes(targetUserId)) {
-      await supabase.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', targetUserId);
-      setFollowingList(followingList.filter(id => id !== targetUserId));
-    } else {
-      await supabase.from('follows').insert({ follower_id: currentUser.id, following_id: targetUserId });
-      setFollowingList([...followingList, targetUserId]);
-    }
-  };
-
-  if (loading) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading users...</div>;
+  if (loading) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
 
   return (
     <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
@@ -92,41 +65,13 @@ export default function Search() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         {results.map((profile) => (
-          <div key={profile.id} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            
-            <div 
-              onClick={() => router.push(`/user/${profile.id}`)}
-              style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
-            >
-              {profile.avatar_url ? (
-                <img src={profile.avatar_url} alt="DP" style={{ width: '45px', height: '45px', borderRadius: '50%', objectFit: 'cover' }} />
-              ) : (
-                <div style={{ width: '45px', height: '45px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>👤</div>
-              )}
-              <div>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>{profile.name}</h3>
-              </div>
-            </div>
-
-            {/* Agar user khud hai toh Follow button mat dikhao */}
-            {profile.id !== currentUser?.id ? (
-              <button 
-                onClick={() => handleFollow(profile.id)}
-                style={{ 
-                  padding: '8px 16px', 
-                  backgroundColor: followingList.includes(profile.id) ? '#ddd' : '#0070f3', 
-                  color: followingList.includes(profile.id) ? '#333' : 'white', 
-                  border: 'none', 
-                  borderRadius: '5px', 
-                  fontWeight: 'bold', 
-                  cursor: 'pointer' 
-                }}
-              >
-                {followingList.includes(profile.id) ? 'Following' : 'Follow'}
-              </button>
+          <div key={profile.id} onClick={() => router.push(`/user/${profile.id}`)} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '15px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            {profile.avatar_url ? (
+              <img src={profile.avatar_url} alt="DP" style={{ width: '45px', height: '45px', borderRadius: '50%', objectFit: 'cover' }} />
             ) : (
-              <span style={{ fontSize: '12px', color: '#666', fontStyle: 'italic' }}>You</span>
+              <div style={{ width: '45px', height: '45px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>👤</div>
             )}
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>{profile.name}</h3>
           </div>
         ))}
       </div>
@@ -135,11 +80,11 @@ export default function Search() {
         <p style={{ textAlign: 'center', color: '#666', marginTop: '20px' }}>No users found.</p>
       )}
 
-      {/* Debug Info */}
+      {/* Debug Info (Check karne ke liye) */}
       <div style={{ marginTop: '30px', fontSize: '11px', color: '#aaa', textAlign: 'center' }}>
         Total users loaded: {allUsers.length}
       </div>
 
     </div>
   );
-            }
+                }
