@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '../../lib/cropImage';
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -126,24 +127,16 @@ export default function Profile() {
     );
   }
 
-  // DP Full Image View (With Close Button)
+  // DP Full Image View (With Zoom)
   if (showFullImage && profile.avatar_url) {
     return (
-      <div 
-        style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}
-      >
-        <button 
-          onClick={() => setShowFullImage(false)} 
-          style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1001 }}
-        >
-          ✕
-        </button>
-        <div 
-          onClick={() => setShowFullImage(false)} 
-          style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '100%' }}
-        >
-          <img src={profile.avatar_url} alt="Full DP" style={{ maxWidth: '90%', maxHeight: '80vh', objectFit: 'contain', borderRadius: '5px' }} />
-        </div>
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 1000 }}>
+        <button onClick={() => setShowFullImage(false)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 1001 }}>✕</button>
+        <TransformWrapper>
+          <TransformComponent wrapperStyle={{ width: "100vw", height: "100vh" }} contentStyle={{ width: "100%", height: "100%" }}>
+            <img src={profile.avatar_url} alt="Full DP" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </TransformComponent>
+        </TransformWrapper>
       </div>
     );
   }
