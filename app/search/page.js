@@ -5,26 +5,25 @@ import { supabase } from '../../lib/supabase';
 
 export default function Search() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [allUsers, setAllUsers] = useState([]); // Saare users yahan save honge
+  const [allUsers, setAllUsers] = useState([]);
   const [results, setResults] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [followingList, setFollowingList] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // 1. Page load hote hi saare users fetch karo (posts se)
+  // 1. Saare users fetch karo (Posts se)
   useEffect(() => {
     const fetchAllUsers = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) setCurrentUser(user);
 
-      // Saare posts fetch karo jahan naam save hai
       const { data, error } = await supabase
         .from('posts')
         .select('user_id, user_name, user_avatar');
       
       if (!error && data) {
-        // Duplicate users hatao (ek user ki ek hi entry rahe)
+        // Duplicate users hatao
         const uniqueUsers = [];
         const map = new Map();
         for (const item of data) {
@@ -44,27 +43,25 @@ export default function Search() {
     fetchAllUsers();
   }, []);
 
-  // 2. Jab searchQuery change ho, toh browser me filter karo
+  // 2. Live Search (Browser me filter)
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setResults([]);
       return;
     }
 
-    // Browser me hi naam search karo
+    // Browser me filter karo (Apne aap ko bhi dikhao)
     const filtered = allUsers.filter(user => 
       user.name && user.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
     
-    // Apne aap ko search result se hatao
-    const finalResults = filtered.filter(u => u.id !== currentUser?.id);
-    setResults(finalResults);
+    setResults(filtered);
     
-  }, [searchQuery, allUsers, currentUser]);
+  }, [searchQuery, allUsers]);
 
-  // 3. Follow/Unfollow
+  // 3. Follow/Unfollow (Agar khud ko follow na kar sake, toh button hide karenge)
   const handleFollow = async (targetUserId) => {
-    if (!currentUser) return;
+    if (!currentUser || targetUserId === currentUser.id) return;
     
     if (followingList.includes(targetUserId)) {
       await supabase.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', targetUserId);
@@ -111,20 +108,25 @@ export default function Search() {
               </div>
             </div>
 
-            <button 
-              onClick={() => handleFollow(profile.id)}
-              style={{ 
-                padding: '8px 16px', 
-                backgroundColor: followingList.includes(profile.id) ? '#ddd' : '#0070f3', 
-                color: followingList.includes(profile.id) ? '#333' : 'white', 
-                border: 'none', 
-                borderRadius: '5px', 
-                fontWeight: 'bold', 
-                cursor: 'pointer' 
-              }}
-            >
-              {followingList.includes(profile.id) ? 'Following' : 'Follow'}
-            </button>
+            {/* Agar user khud hai toh Follow button mat dikhao */}
+            {profile.id !== currentUser?.id ? (
+              <button 
+                onClick={() => handleFollow(profile.id)}
+                style={{ 
+                  padding: '8px 16px', 
+                  backgroundColor: followingList.includes(profile.id) ? '#ddd' : '#0070f3', 
+                  color: followingList.includes(profile.id) ? '#333' : 'white', 
+                  border: 'none', 
+                  borderRadius: '5px', 
+                  fontWeight: 'bold', 
+                  cursor: 'pointer' 
+                }}
+              >
+                {followingList.includes(profile.id) ? 'Following' : 'Follow'}
+              </button>
+            ) : (
+              <span style={{ fontSize: '12px', color: '#666', fontStyle: 'italic' }}>You</span>
+            )}
           </div>
         ))}
       </div>
@@ -133,11 +135,11 @@ export default function Search() {
         <p style={{ textAlign: 'center', color: '#666', marginTop: '20px' }}>No users found.</p>
       )}
 
-      {/* Debug Info (Check karne ke liye ki data aaya ya nahi) */}
+      {/* Debug Info */}
       <div style={{ marginTop: '30px', fontSize: '11px', color: '#aaa', textAlign: 'center' }}>
         Total users loaded: {allUsers.length}
       </div>
 
     </div>
   );
-    }
+            }
