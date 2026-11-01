@@ -154,6 +154,7 @@ export default function Home() {
               return (
                 <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                   
+                  {/* Post Header (Yahan user_id se profile khulegi) */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
                     <div onClick={() => router.push(`/user/${post.user_id}`)} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
                       {post.user_avatar ? (
@@ -166,8 +167,10 @@ export default function Home() {
                     {isOwner && <button onClick={() => handleDelete(post.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'red' }}>🗑️</button>}
                   </div>
 
+                  {/* Post Image */}
                   <img src={post.image_url} alt="Post" onClick={() => setFullImage(post.image_url)} style={{ width: '100%', height: 'auto', maxHeight: '500px', objectFit: 'cover', display: 'block', cursor: 'pointer' }} />
                   
+                  {/* Action Bar */}
                   <div style={{ padding: '10px 15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee' }}>
                     <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                       <div onClick={() => router.push(`/likes/${String(post.id)}`)} style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '15px', color: '#666' }}>
@@ -187,6 +190,7 @@ export default function Home() {
                     )}
                   </div>
 
+                  {/* Like/Reaction Buttons */}
                   <div style={{ display: 'flex', borderBottom: '1px solid #eee', position: 'relative' }}>
                     <button 
                       onClick={() => setShowReactionPicker(showReactionPicker === post.id ? null : post.id)} 
@@ -212,6 +216,7 @@ export default function Home() {
                     )}
                   </div>
 
+                  {/* Caption */}
                   {post.caption && (
                     <div style={{ padding: '10px 15px', fontSize: '15px' }}>
                       <strong>{displayName}: </strong> {post.caption}
@@ -225,6 +230,7 @@ export default function Home() {
         </div>
       </main>
 
+      {/* Bottom Nav */}
       <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '15px 0', position: 'sticky', bottom: 0 }}>
         <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3' }}><span style={{ fontSize: '20px' }}>🏠</span><span style={{ fontSize: '12px' }}>{t[lang].home}</span></button>
         <button onClick={() => router.push('/search')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}><span style={{ fontSize: '20px' }}>🔍</span><span style={{ fontSize: '12px' }}>{t[lang].search}</span></button>
@@ -232,7 +238,7 @@ export default function Home() {
         <button onClick={() => router.push('/profile')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}><span style={{ fontSize: '20px' }}>👤</span><span style={{ fontSize: '12px' }}>{t[lang].profile}</span></button>
       </nav>
 
-      {/* Full Image Popup with Zoom (Pinch to Zoom) */}
+      {/* Full Image Popup with Zoom */}
       {fullImage && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 1000 }}>
           <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 1001 }}>✕</button>
@@ -246,4 +252,4 @@ export default function Home() {
 
     </div>
   );
-            }
+}
