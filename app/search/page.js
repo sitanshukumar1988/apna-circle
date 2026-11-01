@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase';
 
 export default function Search() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [allUsers, setAllUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]); // Saare users yahan save honge
   const [results, setResults] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [followingList, setFollowingList] = useState([]);
@@ -18,19 +18,21 @@ export default function Search() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) setCurrentUser(user);
 
-      // Saare posts fetch karo
-      const { data, error } = await supabase.from('posts').select('user_id, user_name, user_avatar');
+      // Saare posts fetch karo jahan naam save hai
+      const { data, error } = await supabase
+        .from('posts')
+        .select('user_id, user_name, user_avatar');
       
       if (!error && data) {
-        // Duplicate users hatao
+        // Duplicate users hatao (ek user ki ek hi entry rahe)
         const uniqueUsers = [];
         const map = new Map();
         for (const item of data) {
-          if (!map.has(item.user_id)) {
+          if (item.user_id && !map.has(item.user_id)) {
             map.set(item.user_id, true);
             uniqueUsers.push({
               id: item.user_id,
-              name: item.user_name,
+              name: item.user_name || 'User',
               avatar_url: item.user_avatar
             });
           }
@@ -42,19 +44,19 @@ export default function Search() {
     fetchAllUsers();
   }, []);
 
-  // 2. Search query change hone par browser me filter karo
+  // 2. Jab searchQuery change ho, toh browser me filter karo
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setResults([]);
       return;
     }
 
-    // Browser me hi naam search karo (Live search)
+    // Browser me hi naam search karo
     const filtered = allUsers.filter(user => 
       user.name && user.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
     
-    // Apne aap ko hatao
+    // Apne aap ko search result se hatao
     const finalResults = filtered.filter(u => u.id !== currentUser?.id);
     setResults(finalResults);
     
@@ -131,6 +133,11 @@ export default function Search() {
         <p style={{ textAlign: 'center', color: '#666', marginTop: '20px' }}>No users found.</p>
       )}
 
+      {/* Debug Info (Check karne ke liye ki data aaya ya nahi) */}
+      <div style={{ marginTop: '30px', fontSize: '11px', color: '#aaa', textAlign: 'center' }}>
+        Total users loaded: {allUsers.length}
+      </div>
+
     </div>
   );
-  }
+    }
