@@ -13,10 +13,10 @@ export default function Home() {
   
   const [likesData, setLikesData] = useState({});
   const [commentsData, setCommentsData] = useState({});
-  const [savedPosts, setSavedPosts] = useState([]); // Save kiye hue posts
+  const [savedPosts, setSavedPosts] = useState([]);
   const [userProfile, setUserProfile] = useState(null);
   const [showReactionPicker, setShowReactionPicker] = useState(null);
-  const [showMenu, setShowMenu] = useState(null); // Kis post ka menu khula hai
+  const [showMenu, setShowMenu] = useState(null);
   
   const router = useRouter();
 
@@ -60,7 +60,6 @@ export default function Home() {
         setCommentsData(commentsMap);
       }
 
-      // Saved Posts fetch karo
       const { data: savedData } = await supabase.from('saved_posts').select('post_id').eq('user_id', session.user.id);
       if (savedData) setSavedPosts(savedData.map(s => s.post_id));
 
@@ -69,9 +68,13 @@ export default function Home() {
     fetchData();
   }, [router]);
 
-  // Menu ke bahar click karne par menu band karo
+  // Menu ke bahar click karne par menu band karo (Fixed)
   useEffect(() => {
-    const handleClickOutside = () => setShowMenu(null);
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.menu-container')) {
+        setShowMenu(null);
+      }
+    };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
@@ -188,7 +191,7 @@ export default function Home() {
               return (
                 <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                   
-                  {/* Post Header with 3-dot Menu */}
+                  {/* Post Header */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
                     <div onClick={() => router.push(`/user/${post.user_id}`)} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
                       {post.user_avatar ? (
@@ -199,8 +202,8 @@ export default function Home() {
                       <span style={{ fontWeight: 'bold' }}>{displayName}</span>
                     </div>
                     
-                    {/* 3 Dots Menu Button */}
-                    <div style={{ position: 'relative' }}>
+                    {/* 3 Dots Menu */}
+                    <div className="menu-container" style={{ position: 'relative' }}>
                       <button 
                         onClick={(e) => { e.stopPropagation(); setShowMenu(showMenu === post.id ? null : post.id); }} 
                         style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', color: '#666', padding: '5px' }}
@@ -208,7 +211,6 @@ export default function Home() {
                         ⋮
                       </button>
 
-                      {/* Dropdown Menu */}
                       {showMenu === post.id && (
                         <div style={{ position: 'absolute', top: '30px', right: '0', backgroundColor: 'white', borderRadius: '5px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', zIndex: 100, display: 'flex', flexDirection: 'column', width: '150px' }}>
                           {isOwner && (
@@ -223,7 +225,6 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Post Image */}
                   <img src={post.image_url} alt="Post" onClick={() => setFullImage(post.image_url)} style={{ width: '100%', height: 'auto', maxHeight: '500px', objectFit: 'cover', display: 'block', cursor: 'pointer' }} />
                   
                   {/* Action Bar */}
