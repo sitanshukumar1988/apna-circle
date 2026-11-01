@@ -29,11 +29,14 @@ export default function Search() {
         return;
       }
       
-      // Naya Database Function use kar rahe hain
-      const { data, error } = await supabase.rpc('search_users', { search_term: searchQuery });
+      // Direct Profiles table se search kar rahe hain
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .ilike('name', `%${searchQuery}%`)
+        .limit(10);
 
       if (!error && data) {
-        // Apne aap ko hata do
         const filtered = data.filter(profile => profile.id !== currentUser?.id);
         setResults(filtered);
       }
@@ -88,7 +91,7 @@ export default function Search() {
                 <div style={{ width: '45px', height: '45px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>👤</div>
               )}
               <div>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>{profile.name}</h3>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>{profile.name || 'User'}</h3>
               </div>
             </div>
 
