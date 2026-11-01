@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/navigation';
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -66,7 +67,6 @@ export default function Home() {
     const hasLiked = likesData[postId]?.find(like => like.user_id === user.id);
     
     if (hasLiked) {
-      // Agar same reaction hai toh delete karo, warna update karo
       if (hasLiked.reaction_type === reactionType) {
         await supabase.from('likes').delete().eq('post_id', postId).eq('user_id', user.id);
         setLikesData(prev => ({
@@ -145,7 +145,6 @@ export default function Home() {
               const postLikes = postLikesArray.length;
               const postComments = commentsData[post.id] || [];
               
-              // Reaction counts
               const reactionCounts = {};
               postLikesArray.forEach(l => {
                 const type = l.reaction_type || 'like';
@@ -179,7 +178,6 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {/* Reaction Icons (Top 3) */}
                     {postLikes > 0 && (
                       <div onClick={() => router.push(`/likes/${String(post.id)}`)} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                         {reactionCounts.like > 0 && <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#0a66c2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '-6px', zIndex: 3, border: '2px solid white' }}><span style={{ color: 'white', fontSize: '10px' }}>👍</span></div>}
@@ -189,7 +187,6 @@ export default function Home() {
                     )}
                   </div>
 
-                  {/* Like/Reaction Buttons */}
                   <div style={{ display: 'flex', borderBottom: '1px solid #eee', position: 'relative' }}>
                     <button 
                       onClick={() => setShowReactionPicker(showReactionPicker === post.id ? null : post.id)} 
@@ -204,7 +201,6 @@ export default function Home() {
                       💬 Comment
                     </button>
 
-                    {/* 5 Emoji Picker */}
                     {showReactionPicker === post.id && (
                       <div style={{ position: 'absolute', bottom: '100%', left: '20px', backgroundColor: 'white', borderRadius: '30px', padding: '5px 15px', display: 'flex', gap: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', zIndex: 10 }}>
                         <button onClick={() => handleReaction(post.id, 'like')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>👍</button>
@@ -236,15 +232,18 @@ export default function Home() {
         <button onClick={() => router.push('/profile')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}><span style={{ fontSize: '20px' }}>👤</span><span style={{ fontSize: '12px' }}>{t[lang].profile}</span></button>
       </nav>
 
+      {/* Full Image Popup with Zoom (Pinch to Zoom) */}
       {fullImage && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 1000 }}>
           <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 1001 }}>✕</button>
-          <div onClick={() => setFullImage(null)} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '100%' }}>
-            <img src={fullImage} alt="Full Post" style={{ maxWidth: '90%', maxHeight: '80vh', objectFit: 'contain', borderRadius: '5px' }} />
-          </div>
+          <TransformWrapper>
+            <TransformComponent wrapperStyle={{ width: "100vw", height: "100vh" }} contentStyle={{ width: "100%", height: "100%" }}>
+              <img src={fullImage} alt="Full Post" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            </TransformComponent>
+          </TransformWrapper>
         </div>
       )}
 
     </div>
   );
-        }
+            }
