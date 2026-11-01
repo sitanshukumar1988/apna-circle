@@ -8,12 +8,18 @@ export default function LikesPage({ params }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   
+  // URL se ID nikal rahe hain
   const postId = params.id;
 
   useEffect(() => {
     const fetchLikes = async () => {
+      if (!postId) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        // Post ID se likes fetch karo
+        // Supabase se likes fetch karo is post id ke liye
         const { data: likesData, error } = await supabase
           .from('likes')
           .select('*')
@@ -46,6 +52,11 @@ export default function LikesPage({ params }) {
         <h1 style={{ fontSize: '20px', fontWeight: 'bold' }}>Likes ({likes.length})</h1>
       </div>
 
+      {/* Debug Info (Tumhare liye ki ID kya aa rahi hai) */}
+      <div style={{ fontSize: '12px', color: 'gray', marginBottom: '10px', textAlign: 'center' }}>
+        Checking Likes for Post ID: {postId}
+      </div>
+
       {/* Likes List */}
       <div style={{ backgroundColor: 'white', borderRadius: '10px', padding: '15px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
         {likes.length === 0 ? (
@@ -66,4 +77,4 @@ export default function LikesPage({ params }) {
 
     </div>
   );
-        }
+}
