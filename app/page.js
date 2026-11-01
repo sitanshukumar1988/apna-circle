@@ -13,6 +13,7 @@ export default function Home() {
   const [likesData, setLikesData] = useState({});
   const [commentsData, setCommentsData] = useState({});
   const [userProfile, setUserProfile] = useState(null);
+  const [showReactionPicker, setShowReactionPicker] = useState(null); // Kis post ka emoji picker khula hai
   
   const router = useRouter();
 
@@ -39,7 +40,8 @@ export default function Home() {
           likesMap[like.post_id].push({
             user_id: like.user_id,
             user_name: like.user_name || 'User',
-            user_avatar: like.user_avatar
+            user_avatar: like.user_avatar,
+            reaction_type: like.reaction_type || 'like'
           });
         });
         setLikesData(likesMap);
@@ -60,16 +62,18 @@ export default function Home() {
     fetchData();
   }, [router]);
 
-  const handleLike = async (postId) => {
+  const handleReaction = async (postId, reactionType) => {
     const hasLiked = likesData[postId]?.some(like => like.user_id === user.id);
     
     if (hasLiked) {
+      // Agar pehle se like hai, toh delete karo
       await supabase.from('likes').delete().eq('post_id', postId).eq('user_id', user.id);
       setLikesData(prev => ({
         ...prev,
         [postId]: prev[postId].filter(like => like.user_id !== user.id)
       }));
     } else {
+      // Naya reaction add karo
       const userName = userProfile?.name || user.email.split('@')[0];
       const userAvatar = userProfile?.avatar_url || null;
       
@@ -77,14 +81,16 @@ export default function Home() {
         post_id: postId, 
         user_id: user.id,
         user_name: userName,
-        user_avatar: userAvatar
+        user_avatar: userAvatar,
+        reaction_type: reactionType
       });
       
       setLikesData(prev => ({
         ...prev,
-        [postId]: [...(prev[postId] || []), { user_id: user.id, user_name: userName, user_avatar: userAvatar }]
+        [postId]: [...(prev[postId] || []), { user_id: user.id, user_name: userName, user_avatar: userAvatar, reaction_type: reactionType }]
       }));
     }
+    setShowReactionPicker(null); // Picker band karo
   };
 
   const handleDelete = async (postId) => {
@@ -128,9 +134,16 @@ export default function Home() {
               const displayName = post.user_name || post.user_email.split('@')[0];
               const isOwner = user.email === post.user_email;
               const postLikesArray = likesData[post.id] || [];
-              const hasLiked = postLikesArray.some(like => like.user_id === user.id);
+              const myLike = postLikesArray.find(like => like.user_id === user.id);
               const postLikes = postLikesArray.length;
               const postComments = commentsData[post.id] || [];
+              
+              // Reaction counts nikaalo (Top 3 dikhane ke liye)
+              const reactionCounts = {};
+              postLikesArray.forEach(l => {
+                const type = l.reaction_type || 'like';
+                reactionCounts[type] = (reactionCounts[type] || 0) + 1;
+              });
 
               return (
                 <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
@@ -151,53 +164,64 @@ export default function Home() {
                   {/* Post Image */}
                   <img src={post.image_url} alt="Post" onClick={() => setFullImage(post.image_url)} style={{ width: '100%', height: 'auto', maxHeight: '500px', objectFit: 'cover', display: 'block', cursor: 'pointer' }} />
                   
-                  {/* LinkedIn Style Action Bar */}
+                  {/* Action Bar */}
                   <div style={{ padding: '10px 15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee' }}>
                     
-                    {/* Left Side: Counts (Yahan String(post.id) use kiya hai) */}
                     <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                      <div 
-                        onClick={() => router.push(`/likes/${String(post.id)}`)}
-                        style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '15px', color: '#666' }}
-                      >
+                      <div onClick={() => router.push(`/likes/${String(post.id)}`)} style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '15px', color: '#666' }}>
                         <span style={{ fontSize: '18px' }}>👍</span> {postLikes}
                       </div>
-                      
-                      <div 
-                        onClick={() => router.push(`/comments/${String(post.id)}`)}
-                        style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '15px', color: '#666' }}
-                      >
+                      <div onClick={() => router.push(`/comments/${String(post.id)}`)} style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '15px', color: '#666' }}>
                         <span style={{ fontSize: '18px' }}>💬</span> {postComments.length}
                       </div>
                     </div>
 
-                    {/* Right Side: Reaction Icons (Yahan bhi String(post.id) use kiya hai) */}
+                    {/* Reaction Icons (Dynamic based on actual likes) */}
                     {postLikes > 0 && (
-                      <div 
-                        onClick={() => router.push(`/likes/${String(post.id)}`)}
-                        style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-                      >
-                        <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#0a66c2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '-6px', zIndex: 3, border: '2px solid white' }}>
-                          <span style={{ color: 'white', fontSize: '10px' }}>👍</span>
-                        </div>
-                        <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#dc3545', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '-6px', zIndex: 2, border: '2px solid white' }}>
-                          <span style={{ color: 'white', fontSize: '10px' }}>❤️</span>
-                        </div>
-                        <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#ffc107', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1, border: '2px solid white' }}>
-                          <span style={{ color: 'white', fontSize: '10px' }}>😂</span>
-                        </div>
+                      <div onClick={() => router.push(`/likes/${String(post.id)}`)} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                        {reactionCounts.like > 0 && (
+                          <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#0a66c2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '-6px', zIndex: 3, border: '2px solid white' }}>
+                            <span style={{ color: 'white', fontSize: '10px' }}>👍</span>
+                          </div>
+                        )}
+                        {reactionCounts.love > 0 && (
+                          <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#dc3545', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '-6px', zIndex: 2, border: '2px solid white' }}>
+                            <span style={{ color: 'white', fontSize: '10px' }}>❤️</span>
+                          </div>
+                        )}
+                        {reactionCounts.haha > 0 && (
+                          <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#ffc107', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1, border: '2px solid white' }}>
+                            <span style={{ color: 'white', fontSize: '10px' }}>😂</span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
 
-                  {/* Like/Unlike Buttons */}
-                  <div style={{ display: 'flex', borderBottom: '1px solid #eee' }}>
-                    <button onClick={() => handleLike(post.id)} style={{ flex: 1, padding: '10px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', color: hasLiked ? '#dc3545' : '#666', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px' }}>
-                      {hasLiked ? '❤️ Liked' : '🤍 Like'}
+                  {/* Like/Reaction Buttons */}
+                  <div style={{ display: 'flex', borderBottom: '1px solid #eee', position: 'relative' }}>
+                    
+                    <button 
+                      onClick={() => setShowReactionPicker(showReactionPicker === post.id ? null : post.id)} 
+                      style={{ flex: 1, padding: '10px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', color: myLike ? (myLike.reaction_type === 'love' ? '#dc3545' : '#0a66c2') : '#666', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px' }}
+                    >
+                      {myLike ? (
+                        myLike.reaction_type === 'love' ? '❤️ Loved' : myLike.reaction_type === 'haha' ? '😂 Haha' : '👍 Liked'
+                      ) : '🤍 Like'}
                     </button>
+                    
                     <button onClick={() => router.push(`/comments/${String(post.id)}`)} style={{ flex: 1, padding: '10px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', color: '#666', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px' }}>
                       💬 Comment
                     </button>
+
+                    {/* Emoji Picker Popup */}
+                    {showReactionPicker === post.id && (
+                      <div style={{ position: 'absolute', bottom: '100%', left: '20px', backgroundColor: 'white', borderRadius: '30px', padding: '5px 10px', display: 'flex', gap: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', zIndex: 10 }}>
+                        <button onClick={() => handleReaction(post.id, 'like')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>👍</button>
+                        <button onClick={() => handleReaction(post.id, 'love')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>❤️</button>
+                        <button onClick={() => handleReaction(post.id, 'haha')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>😂</button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Caption */}
@@ -214,7 +238,6 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Bottom Navigation */}
       <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '15px 0', position: 'sticky', bottom: 0 }}>
         <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3' }}>
           <span style={{ fontSize: '20px' }}>🏠</span>
