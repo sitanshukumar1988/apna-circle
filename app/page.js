@@ -32,6 +32,19 @@ export default function Home() {
     fetchData();
   }, [router]);
 
+  // Delete Function
+  const handleDelete = async (postId) => {
+    if (window.confirm('Kya aap sach me ye post delete karna chahte hain?')) {
+      const { error } = await supabase.from('posts').delete().eq('id', postId);
+      if (error) {
+        alert('Error deleting post: ' + error.message);
+      } else {
+        // Feed se post hata do
+        setPosts(posts.filter(post => post.id !== postId));
+      }
+    }
+  };
+
   const changeLanguage = (newLang) => {
     document.cookie = `locale=${newLang}; path=/; max-age=31536000`;
     setLang(newLang);
@@ -81,34 +94,37 @@ export default function Home() {
             </div>
           ) : (
             posts.map((post) => {
-              // Gemini wala logic yahan apply kiya hai
               const displayName = post.user_name || post.user_email.split('@')[0];
+              const isOwner = user.email === post.user_email; // Check karo ki ye post tumhari hai ya nahi
               
               return (
                 <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                   
-                  {/* Post Header: DP + Name */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
-                    {post.user_avatar ? (
-                      <img 
-                        src={post.user_avatar} 
-                        alt="Profile" 
-                        style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} 
-                      />
-                    ) : (
-                      <div style={{ width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>👤</div>
+                  {/* Post Header */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      {post.user_avatar ? (
+                        <img src={post.user_avatar} alt="Profile" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>👤</div>
+                      )}
+                      <span style={{ fontWeight: 'bold', fontSize: '16px', color: '#333' }}>{displayName}</span>
+                    </div>
+
+                    {/* Delete Button (Sirf apni post par dikhega) */}
+                    {isOwner && (
+                      <button 
+                        onClick={() => handleDelete(post.id)} 
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#dc3545', padding: '5px' }}
+                        title="Delete Post"
+                      >
+                        🗑️
+                      </button>
                     )}
-                    <span style={{ fontWeight: 'bold', fontSize: '16px', color: '#333' }}>
-                      {displayName}
-                    </span>
                   </div>
 
-                  <img 
-                    src={post.image_url} 
-                    alt="Post" 
-                    onClick={() => setFullImage(post.image_url)} 
-                    style={{ width: '100%', display: 'block', cursor: 'pointer' }} 
-                  />
+                  <img src={post.image_url} alt="Post" onClick={() => setFullImage(post.image_url)} style={{ width: '100%', display: 'block', cursor: 'pointer' }} />
+                  
                   {post.caption && (
                     <div style={{ padding: '10px 15px', fontSize: '15px' }}>
                       <strong>{displayName}: </strong> {post.caption}
@@ -138,12 +154,9 @@ export default function Home() {
         </button>
       </nav>
 
-      {/* Image Popup (Modal) */}
+      {/* Image Popup */}
       {fullImage && (
-        <div 
-          onClick={() => setFullImage(null)} 
-          style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}
-        >
+        <div onClick={() => setFullImage(null)} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
           <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '10px', maxWidth: '90%', maxHeight: '90%', overflow: 'hidden' }}>
             <img src={fullImage} alt="Popup Post" style={{ width: '100%', height: 'auto', maxHeight: '80vh', objectFit: 'contain', borderRadius: '5px' }} />
           </div>
@@ -151,4 +164,4 @@ export default function Home() {
       )}
     </div>
   );
-}
+            }
