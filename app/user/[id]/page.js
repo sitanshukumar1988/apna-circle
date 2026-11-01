@@ -8,7 +8,6 @@ export default function UserProfile({ params }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Photo badi karne ke liye states
   const [showFullImage, setShowFullImage] = useState(false);
   const [fullImageUrl, setFullImageUrl] = useState(null);
   
@@ -49,7 +48,7 @@ export default function UserProfile({ params }) {
   return (
     <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
       
-      {/* Header */}
+      {/* Header with Back Button */}
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
         <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '15px' }}>←</button>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold' }}>{profile?.name || 'Profile'}</h1>
@@ -86,18 +85,28 @@ export default function UserProfile({ params }) {
         ))}
       </div>
 
-      {/* Full Image Popup */}
+      {/* Full Image Popup with Close Button */}
       {showFullImage && (
         <div 
-          onClick={() => setShowFullImage(false)} 
-          style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}
+          style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}
         >
-          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', borderRadius: '10px', padding: '10px', maxWidth: '95%', maxHeight: '95%' }}>
-            <img src={fullImageUrl} alt="Full" style={{ maxWidth: '100%', maxHeight: '85vh', objectFit: 'contain', borderRadius: '5px' }} />
-          </div>
+          {/* Close Button (X) */}
+          <button 
+            onClick={() => setShowFullImage(false)} 
+            style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            ✕
+          </button>
+
+          {/* Full Image */}
+          <img 
+            src={fullImageUrl} 
+            alt="Full" 
+            style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain', borderRadius: '5px' }} 
+          />
         </div>
       )}
 
     </div>
   );
-    }
+  }
