@@ -8,7 +8,6 @@ export default function Home() {
   const [lang, setLang] = useState('en');
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState([]);
-  const [profiles, setProfiles] = useState({});
   const [fullImage, setFullImage] = useState(null);
   const router = useRouter();
 
@@ -18,39 +17,15 @@ export default function Home() {
 
     const fetchData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push('/login');
-        return;
-      }
+      if (!session) { router.push('/login'); return; }
       setUser(session.user);
 
-      // 1. Saari posts fetch karo
-      const { data: postsData, error: postsError } = await supabase
+      const { data, error } = await supabase
         .from('posts')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!postsError && postsData) {
-        setPosts(postsData);
-
-        // 2. Profiles fetch karo (email ke basis par)
-        const emails = [...new Set(postsData.map(p => p.user_email))];
-        
-        if (emails.length > 0) {
-          const { data: profilesData } = await supabase
-            .from('profiles')
-            .select('*')
-            .in('email', emails);
-
-          const profileMap = {};
-          if (profilesData) {
-            profilesData.forEach(p => {
-              profileMap[p.email] = p;
-            });
-          }
-          setProfiles(profileMap);
-        }
-      }
+      if (!error && data) setPosts(data);
       
       setTimeout(() => setLoading(false), 1000);
     };
@@ -106,17 +81,16 @@ export default function Home() {
             </div>
           ) : (
             posts.map((post) => {
-              const postUser = profiles[post.user_email] || {};
-              // Agar naam nahi mila toh email ka pehla hissa dikhao
-              const displayName = postUser.name || post.user_email.split('@')[0]; 
+              // Direct post wala data use karo
+              const displayName = post.user_name || post.user_email.split('@')[0];
               
               return (
                 <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                   
                   {/* User Info Header */}
                   <div style={{ padding: '10px 15px', borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    {postUser.avatar_url ? (
-                      <img src={postUser.avatar_url} alt="DP" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} />
+                    {post.user_avatar ? (
+                      <img src={post.user_avatar} alt="DP" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} />
                     ) : (
                       <div style={{ width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>👤</div>
                     )}
@@ -171,4 +145,4 @@ export default function Home() {
       )}
     </div>
   );
-      }
+                   }
