@@ -12,18 +12,30 @@ export default function LikesPage({ params }) {
 
   useEffect(() => {
     const fetchLikes = async () => {
-      const { data: likesData } = await supabase
-        .from('likes')
-        .select('*')
-        .eq('post_id', postId);
-      
-      if (likesData) setLikes(likesData);
-      setLoading(false);
+      try {
+        // Post ID se likes fetch karo
+        const { data: likesData, error } = await supabase
+          .from('likes')
+          .select('*')
+          .eq('post_id', postId);
+        
+        if (error) {
+          console.log("Error fetching likes:", error);
+        }
+
+        if (likesData) {
+          setLikes(likesData);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchLikes();
   }, [postId]);
 
-  if (loading) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
+  if (loading) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading Likes...</div>;
 
   return (
     <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
@@ -37,7 +49,7 @@ export default function LikesPage({ params }) {
       {/* Likes List */}
       <div style={{ backgroundColor: 'white', borderRadius: '10px', padding: '15px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
         {likes.length === 0 ? (
-          <p style={{ textAlign: 'center', color: '#666' }}>No likes yet.</p>
+          <p style={{ textAlign: 'center', color: '#666', padding: '20px' }}>No likes yet.</p>
         ) : (
           likes.map((like, index) => (
             <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '15px', borderBottom: index !== likes.length - 1 ? '1px solid #eee' : 'none', paddingBottom: index !== likes.length - 1 ? '15px' : '0' }}>
