@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '../../lib/cropImage';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import Loader from '../components/Loader'; // Loader import kiya
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -116,8 +117,10 @@ export default function Profile() {
     router.push('/login');
   };
 
-  if (!user) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
+  // Loader yahan use kiya hai
+  if (!user) return <Loader />;
 
+  // Crop Screen
   if (imageSrc) {
     return (
       <div style={{ position: 'relative', width: '100vw', height: '100vh', background: '#333' }}>
@@ -141,6 +144,7 @@ export default function Profile() {
     );
   }
 
+  // DP Full Image View (With Zoom)
   if (showFullImage && profile.avatar_url) {
     return (
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 1000 }}>
@@ -154,6 +158,7 @@ export default function Profile() {
     );
   }
 
+  // Main Profile Page
   return (
     <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
       
@@ -207,4 +212,4 @@ export default function Profile() {
 
     </div>
   );
-}
+        }
