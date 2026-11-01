@@ -83,7 +83,6 @@ export default function Profile() {
   const handleSave = async () => {
     setSaving(true);
     
-    // 1. Profile save karo
     const { error } = await supabase.from('profiles').upsert({
       id: user.id, 
       email: user.email, 
@@ -100,7 +99,6 @@ export default function Profile() {
       return;
     }
 
-    // 2. Saari purani posts me nayi DP aur Naam update karo
     await supabase.from('posts')
       .update({ 
         user_avatar: profile.avatar_url, 
@@ -110,8 +108,6 @@ export default function Profile() {
 
     alert('Profile and Posts Updated!');
     setSaving(false);
-    
-    // Page refresh karo taaki naya data dikhe
     window.location.reload();
   };
 
@@ -122,7 +118,6 @@ export default function Profile() {
 
   if (!user) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
 
-  // Crop Screen
   if (imageSrc) {
     return (
       <div style={{ position: 'relative', width: '100vw', height: '100vh', background: '#333' }}>
@@ -146,7 +141,6 @@ export default function Profile() {
     );
   }
 
-  // DP Full Image View (With Zoom)
   if (showFullImage && profile.avatar_url) {
     return (
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 1000 }}>
@@ -160,10 +154,14 @@ export default function Profile() {
     );
   }
 
-  // Main Profile Page
   return (
     <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '20px' }}>My Profile</h1>
+      
+      {/* Header with Back Button */}
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+        <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '15px' }}>←</button>
+        <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>My Profile</h1>
+      </div>
       
       <div style={{ textAlign: 'center', marginBottom: '20px' }}>
         {profile.avatar_url ? (
@@ -207,9 +205,6 @@ export default function Profile() {
         Logout
       </button>
 
-      <button onClick={() => router.push('/')} style={{ marginTop: '20px', width: '100%', padding: '10px', backgroundColor: 'transparent', color: '#666', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
-        Back to Home
-      </button>
     </div>
   );
-                                          }
+}
