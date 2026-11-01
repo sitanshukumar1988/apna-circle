@@ -68,7 +68,7 @@ export default function Home() {
     fetchData();
   }, [router]);
 
-  // Menu ke bahar click karne par menu band karo (Fixed)
+  // Menu ke bahar click karne par menu band karo
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (!e.target.closest('.menu-container')) {
@@ -141,6 +141,26 @@ export default function Home() {
     const postLink = `${window.location.origin}/post/${postId}`;
     navigator.clipboard.writeText(postLink);
     alert("Link Copied!");
+    setShowMenu(null);
+  };
+
+  // Share Function
+  const handleShare = async (postId) => {
+    const postLink = `${window.location.origin}/post/${postId}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Apna Circle Post',
+          text: 'Dekho ye post Apna Circle par!',
+          url: postLink,
+        });
+      } catch (error) {
+        console.log('Error sharing', error);
+      }
+    } else {
+      navigator.clipboard.writeText(postLink);
+      alert("Link Copied! (Share not supported on this browser)");
+    }
     setShowMenu(null);
   };
 
@@ -219,7 +239,8 @@ export default function Home() {
                           <button onClick={() => handleSave(post.id)} style={{ padding: '10px', textAlign: 'left', border: 'none', background: 'none', color: '#333', cursor: 'pointer', borderBottom: '1px solid #eee' }}>
                             {savedPosts.includes(post.id) ? '🔖 Unsave' : '🔖 Save'}
                           </button>
-                          <button onClick={() => handleCopyLink(post.id)} style={{ padding: '10px', textAlign: 'left', border: 'none', background: 'none', color: '#333', cursor: 'pointer' }}>🔗 Copy Link</button>
+                          <button onClick={() => handleCopyLink(post.id)} style={{ padding: '10px', textAlign: 'left', border: 'none', background: 'none', color: '#333', cursor: 'pointer', borderBottom: '1px solid #eee' }}>🔗 Copy Link</button>
+                          <button onClick={() => handleShare(post.id)} style={{ padding: '10px', textAlign: 'left', border: 'none', background: 'none', color: '#333', cursor: 'pointer' }}>📤 Share</button>
                         </div>
                       )}
                     </div>
@@ -306,4 +327,4 @@ export default function Home() {
 
     </div>
   );
-    }
+}
