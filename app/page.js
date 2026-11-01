@@ -12,8 +12,8 @@ export default function Home() {
   
   const [likesData, setLikesData] = useState({});
   const [commentsData, setCommentsData] = useState({});
-  const [commentText, setCommentText] = useState({});
-  const [userProfile, setUserProfile] = useState(null); // Current user ki profile
+  const [userProfile, setUserProfile] = useState(null);
+  const [showLikesModal, setShowLikesModal] = useState(null);
   
   const router = useRouter();
 
@@ -26,7 +26,6 @@ export default function Home() {
       if (!session) { router.push('/login'); return; }
       setUser(session.user);
 
-      // Current user ki profile fetch karo (naam aur DP ke liye)
       const { data: profileData } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
       if (profileData) setUserProfile(profileData);
 
@@ -38,7 +37,11 @@ export default function Home() {
         const likesMap = {};
         likesData.forEach(like => {
           if (!likesMap[like.post_id]) likesMap[like.post_id] = [];
-          likesMap[like.post_id].push(like.user_id);
+          likesMap[like.post_id].push({
+            user_id: like.user_id,
+            user_name: like.user_name || 'User',
+            user_avatar: like.user_avatar
+          });
         });
         setLikesData(likesMap);
       }
@@ -59,45 +62,29 @@ export default function Home() {
   }, [router]);
 
   const handleLike = async (postId) => {
-    const hasLiked = likesData[postId]?.includes(user.id);
+    const hasLiked = likesData[postId]?.some(like => like.user_id === user.id);
     
     if (hasLiked) {
       await supabase.from('likes').delete().eq('post_id', postId).eq('user_id', user.id);
       setLikesData(prev => ({
         ...prev,
-        [postId]: prev[postId].filter(id => id !== user.id)
+        [postId]: prev[postId].filter(like => like.user_id !== user.id)
       }));
     } else {
-      await supabase.from('likes').insert({ post_id: postId, user_id: user.id });
+      const userName = userProfile?.name || user.email.split('@')[0];
+      const userAvatar = userProfile?.avatar_url || null;
+      
+      await supabase.from('likes').insert({ 
+        post_id: postId, 
+        user_id: user.id,
+        user_name: userName,
+        user_avatar: userAvatar
+      });
+      
       setLikesData(prev => ({
         ...prev,
-        [postId]: [...(prev[postId] || []), user.id]
+        [postId]: [...(prev[postId] || []), { user_id: user.id, user_name: userName, user_avatar: userAvatar }]
       }));
-    }
-  };
-
-  const handleComment = async (postId) => {
-    const text = commentText[postId];
-    if (!text || text.trim() === '') return;
-
-    // User ka naam aur DP profile se lo
-    const userName = userProfile?.name || user.email.split('@')[0];
-    const userAvatar = userProfile?.avatar_url || null;
-
-    const { data: newComment } = await supabase.from('comments').insert({
-      post_id: postId,
-      user_id: user.id,
-      user_name: userName,
-      user_avatar: userAvatar,
-      comment_text: text
-    }).select().single();
-
-    if (newComment) {
-      setCommentsData(prev => ({
-        ...prev,
-        [postId]: [...(prev[postId] || []), newComment]
-      }));
-      setCommentText(prev => ({ ...prev, [postId]: '' }));
     }
   };
 
@@ -114,8 +101,8 @@ export default function Home() {
   };
 
   const t = {
-    en: { title: "Apna Circle", feed: "Your Feed", noPosts: "No posts yet.", home: "Home", search: "Search", post: "Post", profile: "Profile", like: "Like", comment: "Comment", send: "Send" },
-    hi: { title: "अपना सर्कल", feed: "आपकी फीड", noPosts: "अभी कोई पोस्ट नहीं है।", home: "होम", search: "खोजें", post: "पोस्ट", profile: "प्रोफाइल", like: "लाइक", comment: "कमेंट", send: "भेजें" }
+    en: { title: "Apna Circle", feed: "Your Feed", noPosts: "No posts yet.", home: "Home", search: "Search", post: "Post", profile: "Profile", like: "Like", comment: "Comment", likedBy: "Liked by" },
+    hi: { title: "अपना सर्कल", feed: "आपकी फीड", noPosts: "अभी कोई पोस्ट नहीं है।", home: "होम", search: "खोजें", post: "पोस्ट", profile: "प्रोफाइल", like: "लाइक", comment: "कमेंट", likedBy: "लाइक किया" }
   };
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#0070f3', color: 'white' }}><h1>Loading...</h1></div>;
@@ -141,8 +128,9 @@ export default function Home() {
             posts.map((post) => {
               const displayName = post.user_name || post.user_email.split('@')[0];
               const isOwner = user.email === post.user_email;
-              const hasLiked = likesData[post.id]?.includes(user.id);
-              const postLikes = likesData[post.id]?.length || 0;
+              const postLikesArray = likesData[post.id] || [];
+              const hasLiked = postLikesArray.some(like => like.user_id === user.id);
+              const postLikes = postLikesArray.length;
               const postComments = commentsData[post.id] || [];
 
               return (
@@ -160,51 +148,33 @@ export default function Home() {
                     {isOwner && <button onClick={() => handleDelete(post.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'red' }}>🗑️</button>}
                   </div>
 
-                  <img src={post.image_url} alt="Post" onClick={() => setFullImage(post.image_url)} style={{ width: '100%', display: 'block', cursor: 'pointer' }} />
+                  <img src={post.image_url} alt="Post" onClick={() => setFullImage(post.image_url)} style={{ width: '100%', height: 'auto', maxHeight: '500px', objectFit: 'cover', display: 'block', cursor: 'pointer' }} />
                   
                   <div style={{ padding: '10px 15px', display: 'flex', gap: '15px', borderBottom: '1px solid #eee' }}>
                     <button onClick={() => handleLike(post.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', color: hasLiked ? '#dc3545' : '#333' }}>
                       {hasLiked ? '❤️' : '🤍'} {postLikes} {t[lang].like}
                     </button>
-                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
+                    
+                    {/* Comment Button (Ab naye page par le jayega) */}
+                    <button onClick={() => router.push(`/comments/${post.id}`)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
                       💬 {postComments.length} {t[lang].comment}
                     </button>
                   </div>
+
+                  {postLikes > 0 && (
+                    <div 
+                      onClick={() => setShowLikesModal(post.id)}
+                      style={{ padding: '0 15px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer', color: '#333' }}
+                    >
+                      Liked by {postLikesArray[0]?.user_name} {postLikes > 1 ? `and ${postLikes - 1} others` : ''}
+                    </div>
+                  )}
 
                   {post.caption && (
                     <div style={{ padding: '10px 15px', fontSize: '15px' }}>
                       <strong>{displayName}: </strong> {post.caption}
                     </div>
                   )}
-
-                  {/* Comments Section */}
-                  <div style={{ padding: '10px 15px', backgroundColor: '#fafafa' }}>
-                    {postComments.map(comment => (
-                      <div key={comment.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '10px' }}>
-                        {comment.user_avatar ? (
-                          <img src={comment.user_avatar} alt="DP" style={{ width: '25px', height: '25px', borderRadius: '50%', objectFit: 'cover' }} />
-                        ) : (
-                          <div style={{ width: '25px', height: '25px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>👤</div>
-                        )}
-                        <div style={{ fontSize: '14px' }}>
-                          <strong>{comment.user_name}: </strong> {comment.comment_text}
-                        </div>
-                      </div>
-                    ))}
-
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                      <input 
-                        type="text" 
-                        placeholder="Add a comment..." 
-                        value={commentText[post.id] || ''}
-                        onChange={(e) => setCommentText({ ...commentText, [post.id]: e.target.value })}
-                        style={{ flex: 1, padding: '8px', borderRadius: '5px', border: '1px solid #ccc' }}
-                      />
-                      <button onClick={() => handleComment(post.id)} style={{ padding: '8px 12px', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
-                        {t[lang].send}
-                      </button>
-                    </div>
-                  </div>
 
                 </div>
               );
@@ -240,6 +210,30 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {showLikesModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1002, padding: '20px' }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '10px', width: '100%', maxWidth: '400px', maxHeight: '80vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '15px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: '18px' }}>{t[lang].likedBy} ({likesData[showLikesModal]?.length || 0})</h3>
+              <button onClick={() => setShowLikesModal(null)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#666' }}>✕</button>
+            </div>
+            <div style={{ padding: '15px', overflowY: 'auto' }}>
+              {likesData[showLikesModal]?.map((like, index) => (
+                <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                  {like.user_avatar ? (
+                    <img src={like.user_avatar} alt="DP" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>👤</div>
+                  )}
+                  <span style={{ fontWeight: 'bold', fontSize: '16px' }}>{like.user_name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
-      }
+                           }
