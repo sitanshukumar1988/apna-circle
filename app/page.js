@@ -13,7 +13,7 @@ export default function Home() {
   const [likesData, setLikesData] = useState({});
   const [commentsData, setCommentsData] = useState({});
   const [userProfile, setUserProfile] = useState(null);
-  const [showReactionPicker, setShowReactionPicker] = useState(null); // Kis post ka emoji picker khula hai
+  const [showReactionPicker, setShowReactionPicker] = useState(null);
   
   const router = useRouter();
 
@@ -63,17 +63,24 @@ export default function Home() {
   }, [router]);
 
   const handleReaction = async (postId, reactionType) => {
-    const hasLiked = likesData[postId]?.some(like => like.user_id === user.id);
+    const hasLiked = likesData[postId]?.find(like => like.user_id === user.id);
     
     if (hasLiked) {
-      // Agar pehle se like hai, toh delete karo
-      await supabase.from('likes').delete().eq('post_id', postId).eq('user_id', user.id);
-      setLikesData(prev => ({
-        ...prev,
-        [postId]: prev[postId].filter(like => like.user_id !== user.id)
-      }));
+      // Agar same reaction hai toh delete karo, warna update karo
+      if (hasLiked.reaction_type === reactionType) {
+        await supabase.from('likes').delete().eq('post_id', postId).eq('user_id', user.id);
+        setLikesData(prev => ({
+          ...prev,
+          [postId]: prev[postId].filter(like => like.user_id !== user.id)
+        }));
+      } else {
+        await supabase.from('likes').update({ reaction_type: reactionType }).eq('post_id', postId).eq('user_id', user.id);
+        setLikesData(prev => ({
+          ...prev,
+          [postId]: prev[postId].map(like => like.user_id === user.id ? { ...like, reaction_type: reactionType } : like)
+        }));
+      }
     } else {
-      // Naya reaction add karo
       const userName = userProfile?.name || user.email.split('@')[0];
       const userAvatar = userProfile?.avatar_url || null;
       
@@ -90,7 +97,7 @@ export default function Home() {
         [postId]: [...(prev[postId] || []), { user_id: user.id, user_name: userName, user_avatar: userAvatar, reaction_type: reactionType }]
       }));
     }
-    setShowReactionPicker(null); // Picker band karo
+    setShowReactionPicker(null);
   };
 
   const handleDelete = async (postId) => {
@@ -138,7 +145,7 @@ export default function Home() {
               const postLikes = postLikesArray.length;
               const postComments = commentsData[post.id] || [];
               
-              // Reaction counts nikaalo (Top 3 dikhane ke liye)
+              // Reaction counts
               const reactionCounts = {};
               postLikesArray.forEach(l => {
                 const type = l.reaction_type || 'like';
@@ -148,7 +155,6 @@ export default function Home() {
               return (
                 <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                   
-                  {/* Post Header */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
                     <div onClick={() => router.push(`/user/${post.user_id}`)} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
                       {post.user_avatar ? (
@@ -161,12 +167,9 @@ export default function Home() {
                     {isOwner && <button onClick={() => handleDelete(post.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'red' }}>🗑️</button>}
                   </div>
 
-                  {/* Post Image */}
                   <img src={post.image_url} alt="Post" onClick={() => setFullImage(post.image_url)} style={{ width: '100%', height: 'auto', maxHeight: '500px', objectFit: 'cover', display: 'block', cursor: 'pointer' }} />
                   
-                  {/* Action Bar */}
                   <div style={{ padding: '10px 15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee' }}>
-                    
                     <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                       <div onClick={() => router.push(`/likes/${String(post.id)}`)} style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '15px', color: '#666' }}>
                         <span style={{ fontSize: '18px' }}>👍</span> {postLikes}
@@ -176,37 +179,24 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {/* Reaction Icons (Dynamic based on actual likes) */}
+                    {/* Reaction Icons (Top 3) */}
                     {postLikes > 0 && (
                       <div onClick={() => router.push(`/likes/${String(post.id)}`)} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                        {reactionCounts.like > 0 && (
-                          <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#0a66c2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '-6px', zIndex: 3, border: '2px solid white' }}>
-                            <span style={{ color: 'white', fontSize: '10px' }}>👍</span>
-                          </div>
-                        )}
-                        {reactionCounts.love > 0 && (
-                          <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#dc3545', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '-6px', zIndex: 2, border: '2px solid white' }}>
-                            <span style={{ color: 'white', fontSize: '10px' }}>❤️</span>
-                          </div>
-                        )}
-                        {reactionCounts.haha > 0 && (
-                          <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#ffc107', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1, border: '2px solid white' }}>
-                            <span style={{ color: 'white', fontSize: '10px' }}>😂</span>
-                          </div>
-                        )}
+                        {reactionCounts.like > 0 && <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#0a66c2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '-6px', zIndex: 3, border: '2px solid white' }}><span style={{ color: 'white', fontSize: '10px' }}>👍</span></div>}
+                        {reactionCounts.love > 0 && <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#dc3545', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '-6px', zIndex: 2, border: '2px solid white' }}><span style={{ color: 'white', fontSize: '10px' }}>❤️</span></div>}
+                        {reactionCounts.haha > 0 && <div style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#ffc107', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1, border: '2px solid white' }}><span style={{ color: 'white', fontSize: '10px' }}>😂</span></div>}
                       </div>
                     )}
                   </div>
 
                   {/* Like/Reaction Buttons */}
                   <div style={{ display: 'flex', borderBottom: '1px solid #eee', position: 'relative' }}>
-                    
                     <button 
                       onClick={() => setShowReactionPicker(showReactionPicker === post.id ? null : post.id)} 
-                      style={{ flex: 1, padding: '10px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', color: myLike ? (myLike.reaction_type === 'love' ? '#dc3545' : '#0a66c2') : '#666', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px' }}
+                      style={{ flex: 1, padding: '10px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', color: myLike ? '#0a66c2' : '#666', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px' }}
                     >
                       {myLike ? (
-                        myLike.reaction_type === 'love' ? '❤️ Loved' : myLike.reaction_type === 'haha' ? '😂 Haha' : '👍 Liked'
+                        myLike.reaction_type === 'love' ? '❤️ Loved' : myLike.reaction_type === 'haha' ? '😂 Haha' : myLike.reaction_type === 'wow' ? '😮 Wow' : myLike.reaction_type === 'sad' ? '😢 Sad' : '👍 Liked'
                       ) : '🤍 Like'}
                     </button>
                     
@@ -214,17 +204,18 @@ export default function Home() {
                       💬 Comment
                     </button>
 
-                    {/* Emoji Picker Popup */}
+                    {/* 5 Emoji Picker */}
                     {showReactionPicker === post.id && (
-                      <div style={{ position: 'absolute', bottom: '100%', left: '20px', backgroundColor: 'white', borderRadius: '30px', padding: '5px 10px', display: 'flex', gap: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', zIndex: 10 }}>
+                      <div style={{ position: 'absolute', bottom: '100%', left: '20px', backgroundColor: 'white', borderRadius: '30px', padding: '5px 15px', display: 'flex', gap: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', zIndex: 10 }}>
                         <button onClick={() => handleReaction(post.id, 'like')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>👍</button>
                         <button onClick={() => handleReaction(post.id, 'love')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>❤️</button>
                         <button onClick={() => handleReaction(post.id, 'haha')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>😂</button>
+                        <button onClick={() => handleReaction(post.id, 'wow')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>😮</button>
+                        <button onClick={() => handleReaction(post.id, 'sad')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>😢</button>
                       </div>
                     )}
                   </div>
 
-                  {/* Caption */}
                   {post.caption && (
                     <div style={{ padding: '10px 15px', fontSize: '15px' }}>
                       <strong>{displayName}: </strong> {post.caption}
@@ -239,25 +230,12 @@ export default function Home() {
       </main>
 
       <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '15px 0', position: 'sticky', bottom: 0 }}>
-        <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3' }}>
-          <span style={{ fontSize: '20px' }}>🏠</span>
-          <span style={{ fontSize: '12px' }}>{t[lang].home}</span>
-        </button>
-        <button onClick={() => router.push('/search')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
-          <span style={{ fontSize: '20px' }}>🔍</span>
-          <span style={{ fontSize: '12px' }}>{t[lang].search}</span>
-        </button>
-        <button onClick={() => router.push('/post')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
-          <span style={{ fontSize: '20px' }}>➕</span>
-          <span style={{ fontSize: '12px' }}>{t[lang].post}</span>
-        </button>
-        <button onClick={() => router.push('/profile')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
-          <span style={{ fontSize: '20px' }}>👤</span>
-          <span style={{ fontSize: '12px' }}>{t[lang].profile}</span>
-        </button>
+        <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3' }}><span style={{ fontSize: '20px' }}>🏠</span><span style={{ fontSize: '12px' }}>{t[lang].home}</span></button>
+        <button onClick={() => router.push('/search')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}><span style={{ fontSize: '20px' }}>🔍</span><span style={{ fontSize: '12px' }}>{t[lang].search}</span></button>
+        <button onClick={() => router.push('/post')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}><span style={{ fontSize: '20px' }}>➕</span><span style={{ fontSize: '12px' }}>{t[lang].post}</span></button>
+        <button onClick={() => router.push('/profile')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}><span style={{ fontSize: '20px' }}>👤</span><span style={{ fontSize: '12px' }}>{t[lang].profile}</span></button>
       </nav>
 
-      {/* Full Image Popup */}
       {fullImage && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
           <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 1001 }}>✕</button>
@@ -269,4 +247,4 @@ export default function Home() {
 
     </div>
   );
-    }
+        }
