@@ -82,6 +82,8 @@ export default function Profile() {
 
   const handleSave = async () => {
     setSaving(true);
+    
+    // 1. Profile save karo
     const { error } = await supabase.from('profiles').upsert({
       id: user.id, 
       email: user.email, 
@@ -91,9 +93,26 @@ export default function Profile() {
       avatar_url: profile.avatar_url,
       updated_at: new Date()
     });
-    if (error) alert(error.message);
-    else alert('Profile Saved!');
+
+    if (error) {
+      alert(error.message);
+      setSaving(false);
+      return;
+    }
+
+    // 2. Saari purani posts me nayi DP aur Naam update karo
+    await supabase.from('posts')
+      .update({ 
+        user_avatar: profile.avatar_url, 
+        user_name: profile.name 
+      })
+      .eq('user_email', user.email);
+
+    alert('Profile and Posts Updated!');
     setSaving(false);
+    
+    // Page refresh karo taaki naya data dikhe
+    window.location.reload();
   };
 
   const handleLogout = async () => {
@@ -183,4 +202,4 @@ export default function Profile() {
       </button>
     </div>
   );
-    }
+}
