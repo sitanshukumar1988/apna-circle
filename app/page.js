@@ -15,11 +15,9 @@ export default function Home() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Current user check
       const { data: { user } } = await supabase.auth.getUser();
       setCurrentUser(user);
 
-      // 1. Posts fetch karo
       const { data: postsData } = await supabase
         .from('posts')
         .select('*')
@@ -28,7 +26,6 @@ export default function Home() {
       if (postsData) {
         setPosts(postsData);
 
-        // 2. Profiles fetch karo
         const emails = [...new Set(postsData.map(p => p.user_email))];
         if (emails.length > 0) {
           const { data: profilesData } = await supabase
@@ -46,7 +43,6 @@ export default function Home() {
         }
       }
 
-      // 3. Likes fetch karo
       const { data: likesFetched } = await supabase.from('likes').select('*');
       if (likesFetched) {
         const likesMap = {};
@@ -57,7 +53,6 @@ export default function Home() {
         setLikesData(likesMap);
       }
 
-      // 4. Comments fetch karo (Count ke liye)
       const { data: commentsFetched } = await supabase.from('comments').select('post_id');
       if (commentsFetched) {
         const commentsMap = {};
@@ -120,8 +115,17 @@ export default function Home() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f0f2f5', paddingBottom: '80px' }}>
       
-      <header style={{ backgroundColor: '#0070f3', padding: '15px', color: 'white', textAlign: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
+      {/* Top Header with Credits */}
+      <header style={{ backgroundColor: '#0070f3', padding: '12px 15px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Apna Circle</h1>
+        <div style={{ textAlign: 'right' }}>
+          <p style={{ margin: 0, fontSize: '10px', fontWeight: 'bold', opacity: 0.9 }}>
+            FOUNDED BY SITANSHU KUMAR, HIMANSHU KUMAR & SDRHP TEAM
+          </p>
+          <p style={{ margin: 0, fontSize: '9px', opacity: 0.8 }}>
+            संस्थापक: सितांशु कुमार, हिमांशु कुमार और SDRHP टीम
+          </p>
+        </div>
       </header>
 
       <main style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
@@ -210,7 +214,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* Balanced & Professional Bottom Navigation Bar */}
+      {/* Fixed Bottom Navigation Bar */}
       <nav style={{ 
         backgroundColor: 'white', 
         borderTop: '1px solid #ddd', 
@@ -241,7 +245,6 @@ export default function Home() {
           <span style={{ fontSize: '10px', marginTop: '2px' }}>Network</span>
         </button>
 
-        {/* Professional Post Button (Baaki buttons ke barabar) */}
         <button onClick={() => router.push('/post')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3', flex: 1 }}>
           <span style={{ fontSize: '22px', fontWeight: 'bold' }}>➕</span>
           <span style={{ fontSize: '10px', marginTop: '2px', fontWeight: 'bold' }}>Post</span>
@@ -261,4 +264,4 @@ export default function Home() {
 
     </div>
   );
-          }
+        }
