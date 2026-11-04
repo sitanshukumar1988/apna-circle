@@ -7,16 +7,12 @@ export default function Search() {
   const [searchQuery, setSearchQuery] = useState('');
   const [allUsers, setAllUsers] = useState([]);
   const [results, setResults] = useState([]);
-  const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   // 1. Saare users fetch karo
   useEffect(() => {
     const fetchAllUsers = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) setCurrentUser(user);
-
       // Saare profiles fetch karo
       const { data, error } = await supabase
         .from('profiles')
@@ -43,19 +39,17 @@ export default function Search() {
 
     const query = searchQuery.toLowerCase();
 
+    // Filter lagao (Apne aap ko bhi dikhao)
     const filtered = allUsers.filter(user => {
-      // Agar naam hai toh usme search karo
       if (user.name) {
         return user.name.toLowerCase().includes(query);
       }
       return false;
     });
     
-    // Apne aap ko result me se hata do
-    const finalResults = filtered.filter(u => u.id !== currentUser?.id);
-    setResults(finalResults);
+    setResults(filtered);
     
-  }, [searchQuery, allUsers, currentUser]);
+  }, [searchQuery, allUsers]);
 
   if (loading) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
 
@@ -99,6 +93,11 @@ export default function Search() {
         <p style={{ textAlign: 'center', color: '#666', marginTop: '20px' }}>No users found.</p>
       )}
 
+      {/* Debug Info (Check karne ke liye) */}
+      <div style={{ marginTop: '30px', fontSize: '11px', color: '#aaa', textAlign: 'center' }}>
+        Total users loaded: {allUsers.length}
+      </div>
+
     </div>
   );
-                    }
+            }
