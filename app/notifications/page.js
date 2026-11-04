@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
 
 export default function Notifications() {
-  const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -13,7 +12,6 @@ export default function Notifications() {
     const fetchNotifications = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push('/login'); return; }
-      setUser(user);
 
       const { data } = await supabase
         .from('notifications')
@@ -31,7 +29,6 @@ export default function Notifications() {
 
   return (
     <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f0f2f5', paddingBottom: '80px' }}>
-      
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
         <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '15px' }}>←</button>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold' }}>Notifications</h1>
@@ -48,16 +45,13 @@ export default function Notifications() {
               ) : (
                 <div style={{ width: '45px', height: '45px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>👤</div>
               )}
-              <div>
-                <p style={{ margin: 0, fontSize: '15px' }}>
-                  <strong>{notif.sender_name || 'User'}</strong> {notif.type === 'like' ? 'ne aapki post like ki' : notif.type === 'comment' ? 'ne aapki post par comment kiya' : 'ne aapko follow kiya'}.
-                </p>
-              </div>
+              <p style={{ margin: 0, fontSize: '15px' }}>
+                <strong>{notif.sender_name || 'User'}</strong> {notif.type === 'like' ? 'ne aapki post like ki' : notif.type === 'comment' ? 'ne aapki post par comment kiya' : 'ne aapko follow kiya'}.
+              </p>
             </div>
           ))
         )}
       </div>
-
     </div>
   );
-            }
+                }
