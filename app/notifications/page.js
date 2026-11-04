@@ -5,6 +5,8 @@ import { supabase } from '../../lib/supabase';
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [followingList, setFollowingList] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -12,7 +14,9 @@ export default function Notifications() {
     const fetchNotifications = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push('/login'); return; }
+      setCurrentUser(user);
 
+      // 1. Notifications fetch karo
       const { data } = await supabase
         .from('notifications')
         .select('*')
@@ -20,22 +24,45 @@ export default function Notifications() {
         .order('created_at', { ascending: false });
 
       if (data) setNotifications(data);
+
+      // 2. Jo pehle se follow kar rahe hain unki list nikaalo
+      const { data: followData } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', user.id);
+      
+      if (followData) setFollowingList(followData.map(f => f.following_id));
+
       setLoading(false);
     };
     fetchNotifications();
   }, [router]);
 
-  // Notification type ke hisaab se sign aur message
+  const handleFollowBack = async (targetUserId) => {
+    if (!currentUser) return;
+    
+    if (followingList.includes(targetUserId)) {
+      // Unfollow
+      await supabase.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', targetUserId);
+      setFollowingList(followingList.filter(id => id !== targetUserId));
+    } else {
+      // Follow
+      await supabase.from('follows').insert({ follower_id: currentUser.id, following_id: targetUserId });
+      setFollowingList([...followingList, targetUserId]);
+    }
+  };
+
+  // Notification type ke hisaab se sign aur message (English me)
   const getNotificationContent = (type) => {
     switch(type) {
       case 'follow': 
-        return { sign: '👤+', text: 'ne aapko follow kiya', color: '#0070f3' };
+        return { sign: '👤+', text: 'started following you', color: '#0070f3' };
       case 'like': 
-        return { sign: '❤️', text: 'ne aapki post ko like kiya', color: '#dc3545' };
+        return { sign: '❤️', text: 'liked your post', color: '#dc3545' };
       case 'comment': 
-        return { sign: '💬', text: 'ne aapki post par comment kiya', color: '#28a745' };
+        return { sign: '💬', text: 'commented on your post', color: '#28a745' };
       default: 
-        return { sign: '🔔', text: 'ne kuch activity ki', color: '#666' };
+        return { sign: '🔔', text: 'did something', color: '#666' };
     }
   };
 
@@ -52,15 +79,16 @@ export default function Notifications() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {notifications.length === 0 ? (
-          <p style={{ textAlign: 'center', color: '#666', padding: '20px' }}>Abhi koi notification nahi hai.</p>
+          <p style={{ textAlign: 'center', color: '#666', padding: '20px' }}>No notifications yet.</p>
         ) : (
           notifications.map((notif) => {
             const content = getNotificationContent(notif.type);
+            const isFollowing = followingList.includes(notif.sender_id);
+            const isFollowType = notif.type === 'follow';
             
             return (
               <div 
                 key={notif.id} 
-                onClick={() => router.push(`/user/${notif.sender_id}`)}
                 style={{ 
                   display: 'flex', 
                   alignItems: 'center', 
@@ -69,12 +97,14 @@ export default function Notifications() {
                   backgroundColor: 'white', 
                   borderRadius: '10px', 
                   boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                  cursor: 'pointer',
                   position: 'relative'
                 }}
               >
-                {/* User ka DP */}
-                <div style={{ position: 'relative' }}>
+                {/* User ka DP (Click to open profile) */}
+                <div 
+                  onClick={() => router.push(`/user/${notif.sender_id}`)}
+                  style={{ position: 'relative', cursor: 'pointer' }}
+                >
                   {notif.sender_avatar ? (
                     <img src={notif.sender_avatar} alt="DP" style={{ width: '45px', height: '45px', borderRadius: '50%', objectFit: 'cover' }} />
                   ) : (
@@ -83,19 +113,7 @@ export default function Notifications() {
 
                   {/* Type ka chhota sign (DP ke corner par) */}
                   <div style={{ 
-                    position: 'absolute', 
-                    bottom: '-5px', 
-                    right: '-5px', 
-                    backgroundColor: content.color, 
-                    color: 'white', 
-                    borderRadius: '50%', 
-                    width: '20px', 
-                    height: '20px', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    fontSize: '10px',
-                    border: '2px solid white'
+                    position: 'absolute', bottom: '-5px', right: '-5px', backgroundColor: content.color, color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', border: '2px solid white'
                   }}>
                     {content.sign}
                   </div>
@@ -110,6 +128,25 @@ export default function Notifications() {
                     {new Date(notif.created_at).toLocaleString('en-IN', { hour: 'numeric', minute: 'numeric', hour12: true, day: 'numeric', month: 'short' })}
                   </p>
                 </div>
+
+                {/* Follow Back Button (Sirf follow notification ke liye) */}
+                {isFollowType && (
+                  <button 
+                    onClick={() => handleFollowBack(notif.sender_id)}
+                    style={{ 
+                      padding: '6px 12px', 
+                      backgroundColor: isFollowing ? '#ddd' : '#0070f3', 
+                      color: isFollowing ? '#333' : 'white', 
+                      border: 'none', 
+                      borderRadius: '20px', 
+                      fontWeight: 'bold', 
+                      cursor: 'pointer',
+                      fontSize: '12px'
+                    }}
+                  >
+                    {isFollowing ? 'Following' : 'Follow Back'}
+                  </button>
+                )}
 
               </div>
             );
