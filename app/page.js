@@ -36,10 +36,15 @@ export default function Home() {
           </div>
         ))
       )}
-      
-      <button onClick={() => router.push('/profile')} style={{ padding: '10px', width: '100%', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '5px' }}>
-        Go to Profile
-      </button>
+          )}  // <-- Ye line 37-38 ke aas-paas hai
+
+<button onClick={() => router.push('/post')} style={{ marginTop: '20px', width: '100%', padding: '12px', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '5px' }}>
+  Create New Post
+</button>
+
+<button onClick={() => router.push('/profile')} style={{ padding: '10px', width: '100%', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '5px' }}>
+  Go to Profile
+</button>
     </div>
   );
     }
