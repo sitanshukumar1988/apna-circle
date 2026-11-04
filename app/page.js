@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/navigation';
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 export default function Home() {
   const [posts, setPosts] = useState([]);
@@ -10,6 +11,7 @@ export default function Home() {
   const [commentsData, setCommentsData] = useState({});
   const [currentUser, setCurrentUser] = useState(null);
   const [showReactionPicker, setShowReactionPicker] = useState(null);
+  const [fullImage, setFullImage] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -152,7 +154,11 @@ export default function Home() {
                   overflow: 'hidden' 
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
+                {/* Header: Naam aur DP (Click to open profile) */}
+                <div 
+                  onClick={() => router.push(`/user/${post.user_id}`)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 15px', borderBottom: '1px solid #eee', cursor: 'pointer' }}
+                >
                   {displayAvatar ? (
                     <img src={displayAvatar} alt="DP" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} />
                   ) : (
@@ -161,7 +167,13 @@ export default function Home() {
                   <span style={{ fontWeight: 'bold' }}>{displayName}</span>
                 </div>
                 
-                <img src={post.image_url} alt="Post" style={{ width: '100%', display: 'block' }} />
+                {/* Post Image (Click to Zoom) */}
+                <img 
+                  src={post.image_url} 
+                  alt="Post" 
+                  onClick={() => setFullImage(post.image_url)}
+                  style={{ width: '100%', display: 'block', cursor: 'pointer' }} 
+                />
                 
                 {post.caption && (
                   <div style={{ padding: '10px 15px', fontSize: '15px' }}>
@@ -214,6 +226,18 @@ export default function Home() {
         )}
       </main>
 
+      {/* Full Image Popup with Pinch to Zoom */}
+      {fullImage && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 2000 }}>
+          <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 2001 }}>✕</button>
+          <TransformWrapper>
+            <TransformComponent wrapperStyle={{ width: "100vw", height: "100vh" }} contentStyle={{ width: "100%", height: "100%" }}>
+              <img src={fullImage} alt="Full Post" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            </TransformComponent>
+          </TransformWrapper>
+        </div>
+      )}
+
       {/* Fixed Bottom Navigation Bar */}
       <nav style={{ 
         backgroundColor: 'white', 
@@ -264,4 +288,4 @@ export default function Home() {
 
     </div>
   );
-        }
+          }
