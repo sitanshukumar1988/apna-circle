@@ -74,7 +74,7 @@ export default function Home() {
                   overflow: 'hidden' 
                 }}
               >
-                {/* Header: Naam aur DP profile se aa raha hai */}
+                {/* Post Header: Naam aur DP */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
                   {displayAvatar ? (
                     <img src={displayAvatar} alt="DP" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} />
@@ -84,24 +84,43 @@ export default function Home() {
                   <span style={{ fontWeight: 'bold' }}>{displayName}</span>
                 </div>
                 
+                {/* Post Image */}
                 <img 
                   src={post.image_url} 
                   alt="Post" 
                   style={{ width: '100%', display: 'block' }} 
                 />
                 
+                {/* Post Caption */}
                 {post.caption && (
                   <div style={{ padding: '10px 15px', fontSize: '15px' }}>
                     {post.caption}
                   </div>
                 )}
+
+                {/* Like and Comment Buttons */}
+                <div style={{ padding: '10px 15px', display: 'flex', gap: '20px', borderTop: '1px solid #eee' }}>
+                  <button 
+                    onClick={() => router.push(`/likes/${String(post.id)}`)} 
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', color: '#333', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
+                  >
+                    👍 Like
+                  </button>
+                  <button 
+                    onClick={() => router.push(`/comments/${String(post.id)}`)} 
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', color: '#333', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
+                  >
+                    💬 Comment
+                  </button>
+                </div>
+
               </div>
             );
           })
         )}
       </main>
 
-      {/* Fixed Bottom Navigation Bar (LinkedIn style with Notifications) */}
+      {/* Fixed Bottom Navigation Bar */}
       <nav style={{ 
         backgroundColor: 'white', 
         borderTop: '1px solid #ddd', 
@@ -138,4 +157,4 @@ export default function Home() {
 
     </div>
   );
-      }
+            }
