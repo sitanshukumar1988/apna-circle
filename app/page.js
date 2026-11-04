@@ -7,14 +7,13 @@ export default function Home() {
   const [posts, setPosts] = useState([]);
   const [profiles, setProfiles] = useState({});
   const [likesData, setLikesData] = useState({});
-  const [commentsData, setCommentsData] = useState({}); // Comment count ke liye
+  const [commentsData, setCommentsData] = useState({});
   const [showReactionPicker, setShowReactionPicker] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
-      // 1. Posts fetch karo
       const { data: postsData } = await supabase
         .from('posts')
         .select('*')
@@ -23,7 +22,6 @@ export default function Home() {
       if (postsData) {
         setPosts(postsData);
 
-        // 2. Profiles fetch karo
         const emails = [...new Set(postsData.map(p => p.user_email))];
         if (emails.length > 0) {
           const { data: profilesData } = await supabase
@@ -41,7 +39,6 @@ export default function Home() {
         }
       }
 
-      // 3. Likes fetch karo
       const { data: likesFetched } = await supabase.from('likes').select('*');
       if (likesFetched) {
         const likesMap = {};
@@ -52,7 +49,6 @@ export default function Home() {
         setLikesData(likesMap);
       }
 
-      // 4. Comments fetch karo (Count ke liye)
       const { data: commentsFetched } = await supabase.from('comments').select('post_id');
       if (commentsFetched) {
         const commentsMap = {};
@@ -106,7 +102,7 @@ export default function Home() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f0f2f5', paddingBottom: '70px' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f0f2f5', paddingBottom: '80px' }}>
       
       <header style={{ backgroundColor: '#0070f3', padding: '15px', color: 'white', textAlign: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Apna Circle</h1>
@@ -135,7 +131,6 @@ export default function Home() {
                   overflow: 'hidden' 
                 }}
               >
-                {/* Header: Naam aur DP */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
                   {displayAvatar ? (
                     <img src={displayAvatar} alt="DP" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} />
@@ -145,24 +140,19 @@ export default function Home() {
                   <span style={{ fontWeight: 'bold' }}>{displayName}</span>
                 </div>
                 
-                {/* Post Image */}
                 <img 
                   src={post.image_url} 
                   alt="Post" 
                   style={{ width: '100%', display: 'block' }} 
                 />
                 
-                {/* Post Caption */}
                 {post.caption && (
                   <div style={{ padding: '10px 15px', fontSize: '15px' }}>
                     {post.caption}
                   </div>
                 )}
 
-                {/* Like and Comment Buttons */}
                 <div style={{ padding: '10px 15px', display: 'flex', gap: '20px', borderTop: '1px solid #eee', position: 'relative' }}>
-                  
-                  {/* Like Button */}
                   <button 
                     onClick={() => setShowReactionPicker(showReactionPicker === post.id ? null : post.id)} 
                     style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', color: '#333', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
@@ -170,7 +160,6 @@ export default function Home() {
                     👍 {postLikes} Like
                   </button>
 
-                  {/* Comment Button with Count */}
                   <button 
                     onClick={() => router.push(`/comments/${String(post.id)}`)} 
                     style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', color: '#333', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
@@ -178,7 +167,6 @@ export default function Home() {
                     💬 {postCommentsCount} Comment
                   </button>
 
-                  {/* 5 Emoji Picker Popup */}
                   {showReactionPicker === post.id && (
                     <div style={{ position: 'absolute', bottom: '100%', left: '15px', backgroundColor: 'white', borderRadius: '30px', padding: '5px 15px', display: 'flex', gap: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', zIndex: 10 }}>
                       <button onClick={() => handleReaction(post.id, 'like')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>👍</button>
@@ -189,20 +177,20 @@ export default function Home() {
                     </div>
                   )}
                 </div>
-
               </div>
             );
           })
         )}
       </main>
 
-      {/* Fixed Bottom Navigation Bar */}
+      {/* NEW Fixed Bottom Navigation Bar */}
       <nav style={{ 
         backgroundColor: 'white', 
         borderTop: '1px solid #ddd', 
         display: 'flex', 
         justifyContent: 'space-around', 
-        padding: '10px 0', 
+        alignItems: 'center',
+        padding: '8px 0', 
         position: 'fixed', 
         bottom: 0, 
         left: 0, 
@@ -210,25 +198,60 @@ export default function Home() {
         zIndex: 1000,
         boxShadow: '0 -1px 5px rgba(0,0,0,0.1)'
       }}>
-        <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3' }}>
-          <span style={{ fontSize: '20px' }}>🏠</span>
-          <span style={{ fontSize: '12px', marginTop: '4px' }}>Home</span>
-        </button>
         
-        <button onClick={() => router.push('/post')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
-          <span style={{ fontSize: '20px' }}>➕</span>
-          <span style={{ fontSize: '12px', marginTop: '4px' }}>Post</span>
+        {/* Home */}
+        <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3', flex: 1 }}>
+          <span style={{ fontSize: '22px' }}>🏠</span>
+          <span style={{ fontSize: '10px', marginTop: '2px' }}>Home</span>
         </button>
 
-        <button onClick={() => router.push('/notifications')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
-          <span style={{ fontSize: '20px' }}>🔔</span>
-          <span style={{ fontSize: '12px', marginTop: '4px' }}>Notifications</span>
+        {/* Search */}
+        <button onClick={() => router.push('/search')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
+          <span style={{ fontSize: '22px' }}>🔍</span>
+          <span style={{ fontSize: '10px', marginTop: '2px' }}>Search</span>
         </button>
-        
-        <button onClick={() => router.push('/profile')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
-          <span style={{ fontSize: '20px' }}>👤</span>
-          <span style={{ fontSize: '12px', marginTop: '4px' }}>Profile</span>
+
+        {/* Connections */}
+        <button onClick={() => router.push('/connections')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
+          <span style={{ fontSize: '22px' }}>👥</span>
+          <span style={{ fontSize: '10px', marginTop: '2px' }}>Network</span>
         </button>
+
+        {/* Fancy Post Button */}
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+          <button 
+            onClick={() => router.push('/post')} 
+            style={{ 
+              width: '45px', 
+              height: '45px', 
+              borderRadius: '50%', 
+              background: 'linear-gradient(45deg, #0070f3, #00c6ff)', 
+              color: 'white', 
+              border: 'none', 
+              cursor: 'pointer', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              boxShadow: '0 4px 10px rgba(0, 112, 243, 0.4)',
+              transform: 'translateY(-10px)' 
+            }}
+          >
+            <span style={{ fontSize: '24px', fontWeight: 'bold', marginTop: '-2px' }}>+</span>
+          </button>
+        </div>
+
+        {/* Notifications */}
+        <button onClick={() => router.push('/notifications')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
+          <span style={{ fontSize: '22px' }}>🔔</span>
+          <span style={{ fontSize: '10px', marginTop: '2px' }}>Alerts</span>
+        </button>
+
+        {/* Profile */}
+        <button onClick={() => router.push('/profile')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
+          <span style={{ fontSize: '22px' }}>👤</span>
+          <span style={{ fontSize: '10px', marginTop: '2px' }}>Profile</span>
+        </button>
+
       </nav>
 
     </div>
