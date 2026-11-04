@@ -101,17 +101,35 @@ export default function Home() {
         )}
       </main>
 
+      {/* Fixed Bottom Navigation Bar (LinkedIn style with Alerts) */}
       <nav style={{ 
-        backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', padding: '10px 0', position: 'fixed', bottom: 0, left: 0, width: '100%', zIndex: 1000, boxShadow: '0 -1px 5px rgba(0,0,0,0.1)'
+        backgroundColor: 'white', 
+        borderTop: '1px solid #ddd', 
+        display: 'flex', 
+        justifyContent: 'space-around', 
+        padding: '10px 0', 
+        position: 'fixed', 
+        bottom: 0, 
+        left: 0, 
+        width: '100%', 
+        zIndex: 1000,
+        boxShadow: '0 -1px 5px rgba(0,0,0,0.1)'
       }}>
         <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3' }}>
           <span style={{ fontSize: '20px' }}>🏠</span>
           <span style={{ fontSize: '12px', marginTop: '4px' }}>Home</span>
         </button>
+        
         <button onClick={() => router.push('/post')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
           <span style={{ fontSize: '20px' }}>➕</span>
           <span style={{ fontSize: '12px', marginTop: '4px' }}>Post</span>
         </button>
+
+        <button onClick={() => router.push('/notifications')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
+          <span style={{ fontSize: '20px' }}>🔔</span>
+          <span style={{ fontSize: '12px', marginTop: '4px' }}>Alerts</span>
+        </button>
+        
         <button onClick={() => router.push('/profile')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
           <span style={{ fontSize: '20px' }}>👤</span>
           <span style={{ fontSize: '12px', marginTop: '4px' }}>Profile</span>
@@ -120,4 +138,4 @@ export default function Home() {
 
     </div>
   );
-    }
+          }
