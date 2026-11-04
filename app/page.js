@@ -101,7 +101,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* Fixed Bottom Navigation Bar (LinkedIn style with Alerts) */}
+      {/* Fixed Bottom Navigation Bar (LinkedIn style with Notifications) */}
       <nav style={{ 
         backgroundColor: 'white', 
         borderTop: '1px solid #ddd', 
@@ -127,7 +127,7 @@ export default function Home() {
 
         <button onClick={() => router.push('/notifications')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
           <span style={{ fontSize: '20px' }}>🔔</span>
-          <span style={{ fontSize: '12px', marginTop: '4px' }}>Alerts</span>
+          <span style={{ fontSize: '12px', marginTop: '4px' }}>Notifications</span>
         </button>
         
         <button onClick={() => router.push('/profile')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}>
@@ -138,4 +138,4 @@ export default function Home() {
 
     </div>
   );
-          }
+      }
