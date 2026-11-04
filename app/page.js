@@ -63,14 +63,12 @@ export default function Home() {
     const hasLiked = likesData[postId]?.find(like => like.user_id === user.id);
     
     if (hasLiked) {
-      // Agar pehle se like kiya hai, toh remove karo
       await supabase.from('likes').delete().eq('post_id', postId).eq('user_id', user.id);
       setLikesData(prev => ({
         ...prev,
         [postId]: prev[postId].filter(like => like.user_id !== user.id)
       }));
     } else {
-      // Naya like/reaction add karo
       const { data: profile } = await supabase.from('profiles').select('name, avatar_url').eq('id', user.id).single();
       
       const newLike = { 
@@ -151,7 +149,7 @@ export default function Home() {
                 {/* Like and Comment Buttons */}
                 <div style={{ padding: '10px 15px', display: 'flex', gap: '20px', borderTop: '1px solid #eee', position: 'relative' }}>
                   
-                  {/* Like Button with Emoji Picker */}
+                  {/* Like Button with 5 Emoji Picker */}
                   <button 
                     onClick={() => setShowReactionPicker(showReactionPicker === post.id ? null : post.id)} 
                     style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', color: '#333', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
@@ -167,12 +165,14 @@ export default function Home() {
                     💬 Comment
                   </button>
 
-                  {/* Emoji Picker Popup */}
+                  {/* 5 Emoji Picker Popup */}
                   {showReactionPicker === post.id && (
                     <div style={{ position: 'absolute', bottom: '100%', left: '15px', backgroundColor: 'white', borderRadius: '30px', padding: '5px 15px', display: 'flex', gap: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', zIndex: 10 }}>
                       <button onClick={() => handleReaction(post.id, 'like')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>👍</button>
                       <button onClick={() => handleReaction(post.id, 'love')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>❤️</button>
                       <button onClick={() => handleReaction(post.id, 'haha')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>😂</button>
+                      <button onClick={() => handleReaction(post.id, 'wow')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>😮</button>
+                      <button onClick={() => handleReaction(post.id, 'sad')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>😢</button>
                     </div>
                   )}
                 </div>
@@ -220,4 +220,4 @@ export default function Home() {
 
     </div>
   );
-               }
+        }
