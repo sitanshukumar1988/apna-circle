@@ -7,6 +7,7 @@ export default function Home() {
   const [posts, setPosts] = useState([]);
   const [profiles, setProfiles] = useState({});
   const [likesData, setLikesData] = useState({});
+  const [commentsData, setCommentsData] = useState({}); // Comment count ke liye
   const [showReactionPicker, setShowReactionPicker] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -49,6 +50,17 @@ export default function Home() {
           likesMap[like.post_id].push(like);
         });
         setLikesData(likesMap);
+      }
+
+      // 4. Comments fetch karo (Count ke liye)
+      const { data: commentsFetched } = await supabase.from('comments').select('post_id');
+      if (commentsFetched) {
+        const commentsMap = {};
+        commentsFetched.forEach(comment => {
+          if (!commentsMap[comment.post_id]) commentsMap[comment.post_id] = [];
+          commentsMap[comment.post_id].push(comment);
+        });
+        setCommentsData(commentsMap);
       }
 
       setLoading(false);
@@ -110,6 +122,7 @@ export default function Home() {
             const displayAvatar = userProfile.avatar_url || post.user_avatar;
             const postLikesArray = likesData[post.id] || [];
             const postLikes = postLikesArray.length;
+            const postCommentsCount = commentsData[post.id]?.length || 0;
 
             return (
               <div 
@@ -149,7 +162,7 @@ export default function Home() {
                 {/* Like and Comment Buttons */}
                 <div style={{ padding: '10px 15px', display: 'flex', gap: '20px', borderTop: '1px solid #eee', position: 'relative' }}>
                   
-                  {/* Like Button with 5 Emoji Picker */}
+                  {/* Like Button */}
                   <button 
                     onClick={() => setShowReactionPicker(showReactionPicker === post.id ? null : post.id)} 
                     style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', color: '#333', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
@@ -157,12 +170,12 @@ export default function Home() {
                     👍 {postLikes} Like
                   </button>
 
-                  {/* Comment Button */}
+                  {/* Comment Button with Count */}
                   <button 
                     onClick={() => router.push(`/comments/${String(post.id)}`)} 
                     style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', color: '#333', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
                   >
-                    💬 Comment
+                    💬 {postCommentsCount} Comment
                   </button>
 
                   {/* 5 Emoji Picker Popup */}
@@ -220,4 +233,4 @@ export default function Home() {
 
     </div>
   );
-        }
+          }
