@@ -6,12 +6,14 @@ import { useRouter } from 'next/navigation';
 export default function Home() {
   const [posts, setPosts] = useState([]);
   const [profiles, setProfiles] = useState({});
+  const [likesData, setLikesData] = useState({});
+  const [showReactionPicker, setShowReactionPicker] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
-      // 1. Saari posts fetch karo
+      // 1. Posts fetch karo
       const { data: postsData } = await supabase
         .from('posts')
         .select('*')
@@ -20,7 +22,7 @@ export default function Home() {
       if (postsData) {
         setPosts(postsData);
 
-        // 2. Jitne bhi users ki posts hain, unki profiles fetch karo
+        // 2. Profiles fetch karo
         const emails = [...new Set(postsData.map(p => p.user_email))];
         if (emails.length > 0) {
           const { data: profilesData } = await supabase
@@ -37,10 +39,57 @@ export default function Home() {
           setProfiles(profileMap);
         }
       }
+
+      // 3. Likes fetch karo
+      const { data: likesFetched } = await supabase.from('likes').select('*');
+      if (likesFetched) {
+        const likesMap = {};
+        likesFetched.forEach(like => {
+          if (!likesMap[like.post_id]) likesMap[like.post_id] = [];
+          likesMap[like.post_id].push(like);
+        });
+        setLikesData(likesMap);
+      }
+
       setLoading(false);
     };
     fetchData();
   }, []);
+
+  const handleReaction = async (postId, reactionType) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const hasLiked = likesData[postId]?.find(like => like.user_id === user.id);
+    
+    if (hasLiked) {
+      // Agar pehle se like kiya hai, toh remove karo
+      await supabase.from('likes').delete().eq('post_id', postId).eq('user_id', user.id);
+      setLikesData(prev => ({
+        ...prev,
+        [postId]: prev[postId].filter(like => like.user_id !== user.id)
+      }));
+    } else {
+      // Naya like/reaction add karo
+      const { data: profile } = await supabase.from('profiles').select('name, avatar_url').eq('id', user.id).single();
+      
+      const newLike = { 
+        post_id: postId, 
+        user_id: user.id,
+        user_name: profile?.name || user.email.split('@')[0],
+        user_avatar: profile?.avatar_url,
+        reaction_type: reactionType
+      };
+
+      await supabase.from('likes').insert(newLike);
+      
+      setLikesData(prev => ({
+        ...prev,
+        [postId]: [...(prev[postId] || []), newLike]
+      }));
+    }
+    setShowReactionPicker(null);
+  };
 
   if (loading) {
     return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
@@ -58,10 +107,11 @@ export default function Home() {
           <p style={{ textAlign: 'center', color: '#666' }}>Koi post nahi hai.</p>
         ) : (
           posts.map(post => {
-            // Post ke email se uski fresh profile nikalo
             const userProfile = profiles[post.user_email] || {};
             const displayName = userProfile.name || post.user_name || post.user_email;
             const displayAvatar = userProfile.avatar_url || post.user_avatar;
+            const postLikesArray = likesData[post.id] || [];
+            const postLikes = postLikesArray.length;
 
             return (
               <div 
@@ -74,7 +124,7 @@ export default function Home() {
                   overflow: 'hidden' 
                 }}
               >
-                {/* Post Header: Naam aur DP */}
+                {/* Header: Naam aur DP */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
                   {displayAvatar ? (
                     <img src={displayAvatar} alt="DP" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} />
@@ -99,19 +149,32 @@ export default function Home() {
                 )}
 
                 {/* Like and Comment Buttons */}
-                <div style={{ padding: '10px 15px', display: 'flex', gap: '20px', borderTop: '1px solid #eee' }}>
+                <div style={{ padding: '10px 15px', display: 'flex', gap: '20px', borderTop: '1px solid #eee', position: 'relative' }}>
+                  
+                  {/* Like Button with Emoji Picker */}
                   <button 
-                    onClick={() => router.push(`/likes/${String(post.id)}`)} 
+                    onClick={() => setShowReactionPicker(showReactionPicker === post.id ? null : post.id)} 
                     style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', color: '#333', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
                   >
-                    👍 Like
+                    👍 {postLikes} Like
                   </button>
+
+                  {/* Comment Button */}
                   <button 
                     onClick={() => router.push(`/comments/${String(post.id)}`)} 
                     style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', color: '#333', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
                   >
                     💬 Comment
                   </button>
+
+                  {/* Emoji Picker Popup */}
+                  {showReactionPicker === post.id && (
+                    <div style={{ position: 'absolute', bottom: '100%', left: '15px', backgroundColor: 'white', borderRadius: '30px', padding: '5px 15px', display: 'flex', gap: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)', zIndex: 10 }}>
+                      <button onClick={() => handleReaction(post.id, 'like')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>👍</button>
+                      <button onClick={() => handleReaction(post.id, 'love')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>❤️</button>
+                      <button onClick={() => handleReaction(post.id, 'haha')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>😂</button>
+                    </div>
+                  )}
                 </div>
 
               </div>
@@ -157,4 +220,4 @@ export default function Home() {
 
     </div>
   );
-            }
+               }
