@@ -12,6 +12,7 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState(null);
   const [showReactionPicker, setShowReactionPicker] = useState(null);
   const [fullImage, setFullImage] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0); // Notification count ke liye
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -19,6 +20,16 @@ export default function Home() {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setCurrentUser(user);
+
+      if (user) {
+        // Naye (unread) notifications ka count nikaalo
+        const { count } = await supabase
+          .from('notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('is_read', false);
+        if (count) setUnreadCount(count);
+      }
 
       const { data: postsData } = await supabase
         .from('posts')
@@ -117,16 +128,12 @@ export default function Home() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f0f2f5', paddingBottom: '80px' }}>
       
-      {/* Top Header with Credits */}
+      {/* Top Header */}
       <header style={{ backgroundColor: '#0070f3', padding: '12px 15px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Apna Circle</h1>
         <div style={{ textAlign: 'right' }}>
-          <p style={{ margin: 0, fontSize: '10px', fontWeight: 'bold', opacity: 0.9 }}>
-            FOUNDED BY SITANSHU KUMAR, HIMANSHU KUMAR & SDRHP TEAM
-          </p>
-          <p style={{ margin: 0, fontSize: '9px', opacity: 0.8 }}>
-            संस्थापक: सितांशु कुमार, हिमांशु कुमार और SDRHP टीम
-          </p>
+          <p style={{ margin: 0, fontSize: '9px', fontWeight: 'bold', opacity: 0.9 }}>FOUNDED BY SITANSHU KUMAR</p>
+          <p style={{ margin: 0, fontSize: '8px', opacity: 0.8 }}>With SDRHP Team</p>
         </div>
       </header>
 
@@ -146,19 +153,9 @@ export default function Home() {
             return (
               <div 
                 key={post.id} 
-                style={{ 
-                  backgroundColor: 'white', 
-                  borderRadius: '8px', 
-                  marginBottom: '20px', 
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)', 
-                  overflow: 'hidden' 
-                }}
+                style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}
               >
-                {/* Header: Naam aur DP (Click to open profile) */}
-                <div 
-                  onClick={() => router.push(`/user/${post.user_id}`)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 15px', borderBottom: '1px solid #eee', cursor: 'pointer' }}
-                >
+                <div onClick={() => router.push(`/user/${post.user_id}`)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 15px', borderBottom: '1px solid #eee', cursor: 'pointer' }}>
                   {displayAvatar ? (
                     <img src={displayAvatar} alt="DP" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} />
                   ) : (
@@ -167,13 +164,7 @@ export default function Home() {
                   <span style={{ fontWeight: 'bold' }}>{displayName}</span>
                 </div>
                 
-                {/* Post Image (Click to Zoom) */}
-                <img 
-                  src={post.image_url} 
-                  alt="Post" 
-                  onClick={() => setFullImage(post.image_url)}
-                  style={{ width: '100%', display: 'block', cursor: 'pointer' }} 
-                />
+                <img src={post.image_url} alt="Post" onClick={() => setFullImage(post.image_url)} style={{ width: '100%', display: 'block', cursor: 'pointer' }} />
                 
                 {post.caption && (
                   <div style={{ padding: '10px 15px', fontSize: '15px' }}>
@@ -182,30 +173,18 @@ export default function Home() {
                 )}
 
                 <div style={{ padding: '10px 15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #eee', position: 'relative' }}>
-                  
                   <div style={{ display: 'flex', gap: '15px' }}>
-                    <button 
-                      onClick={() => setShowReactionPicker(showReactionPicker === post.id ? null : post.id)} 
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', color: '#333', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
-                    >
-                      {myLike ? (
-                        myLike.reaction_type === 'love' ? '❤️' : myLike.reaction_type === 'haha' ? '😂' : '👍'
-                      ) : '🤍'} React
+                    <button onClick={() => setShowReactionPicker(showReactionPicker === post.id ? null : post.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', color: '#333', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      {myLike ? (myLike.reaction_type === 'love' ? '❤️' : myLike.reaction_type === 'haha' ? '😂' : '👍') : '🤍'} React
                     </button>
 
-                    <button 
-                      onClick={() => router.push(`/comments/${String(post.id)}`)} 
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', color: '#333', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}
-                    >
+                    <button onClick={() => router.push(`/comments/${String(post.id)}`)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', color: '#333', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}>
                       💬 {postCommentsCount} Comment
                     </button>
                   </div>
 
                   {postLikes > 0 && (
-                    <div 
-                      onClick={() => router.push(`/likes/${String(post.id)}`)} 
-                      style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', backgroundColor: '#f0f2f5', padding: '2px 8px', borderRadius: '10px', fontSize: '13px', color: '#555' }}
-                    >
+                    <div onClick={() => router.push(`/likes/${String(post.id)}`)} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', backgroundColor: '#f0f2f5', padding: '2px 8px', borderRadius: '10px', fontSize: '13px', color: '#555' }}>
                       <span style={{ fontSize: '16px' }}>👍</span> {postLikes}
                     </div>
                   )}
@@ -226,66 +205,65 @@ export default function Home() {
         )}
       </main>
 
-      {/* Full Image Popup with Pinch to Zoom */}
+      {/* Fixed Bottom Navigation Bar with Badge */}
+      <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px 0', position: 'fixed', bottom: 0, left: 0, width: '100%', zIndex: 1000, boxShadow: '0 -1px 5px rgba(0,0,0,0.1)' }}>
+        <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3', flex: 1 }}>
+          <span style={{ fontSize: '22px' }}>🏠</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Home</span>
+        </button>
+        <button onClick={() => router.push('/search')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
+          <span style={{ fontSize: '22px' }}>🔍</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Search</span>
+        </button>
+        <button onClick={() => router.push('/connections')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
+          <span style={{ fontSize: '22px' }}>👥</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Network</span>
+        </button>
+        <button onClick={() => router.push('/post')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3', flex: 1 }}>
+          <span style={{ fontSize: '22px', fontWeight: 'bold' }}>➕</span><span style={{ fontSize: '10px', marginTop: '2px', fontWeight: 'bold' }}>Post</span>
+        </button>
+        
+        {/* ALERTS BUTTON WITH RED BADGE */}
+        <button onClick={() => router.push('/notifications')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1, position: 'relative' }}>
+          <span style={{ fontSize: '22px' }}>🔔</span>
+          <span style={{ fontSize: '10px', marginTop: '2px' }}>Alerts</span>
+          
+          {unreadCount > 0 && (
+            <div style={{ 
+              position: 'absolute', 
+              top: '-2px', 
+              right: '15px', 
+              backgroundColor: 'red', 
+              color: 'white', 
+              borderRadius: '50%', 
+              minWidth: '18px', 
+              height: '18px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              fontSize: '10px', 
+              fontWeight: 'bold',
+              padding: '0 4px',
+              border: '2px solid white'
+            }}>
+              {unreadCount}
+            </div>
+          )}
+        </button>
+
+        <button onClick={() => router.push('/profile')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
+          <span style={{ fontSize: '22px' }}>👤</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Profile</span>
+        </button>
+      </nav>
+
       {fullImage && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 2000 }}>
           <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 2001 }}>✕</button>
           <TransformWrapper>
             <TransformComponent wrapperStyle={{ width: "100vw", height: "100vh" }} contentStyle={{ width: "100%", height: "100%" }}>
               <img src={fullImage} alt="Full Post" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-            </TransformComponent>
+            </TransformWrapper>
           </TransformWrapper>
         </div>
       )}
 
-      {/* Fixed Bottom Navigation Bar */}
-      <nav style={{ 
-        backgroundColor: 'white', 
-        borderTop: '1px solid #ddd', 
-        display: 'flex', 
-        justifyContent: 'space-around', 
-        alignItems: 'center',
-        padding: '8px 0', 
-        position: 'fixed', 
-        bottom: 0, 
-        left: 0, 
-        width: '100%', 
-        zIndex: 1000,
-        boxShadow: '0 -1px 5px rgba(0,0,0,0.1)'
-      }}>
-        
-        <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3', flex: 1 }}>
-          <span style={{ fontSize: '22px' }}>🏠</span>
-          <span style={{ fontSize: '10px', marginTop: '2px' }}>Home</span>
-        </button>
-
-        <button onClick={() => router.push('/search')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
-          <span style={{ fontSize: '22px' }}>🔍</span>
-          <span style={{ fontSize: '10px', marginTop: '2px' }}>Search</span>
-        </button>
-
-        <button onClick={() => router.push('/connections')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
-          <span style={{ fontSize: '22px' }}>👥</span>
-          <span style={{ fontSize: '10px', marginTop: '2px' }}>Network</span>
-        </button>
-
-        <button onClick={() => router.push('/post')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3', flex: 1 }}>
-          <span style={{ fontSize: '22px', fontWeight: 'bold' }}>➕</span>
-          <span style={{ fontSize: '10px', marginTop: '2px', fontWeight: 'bold' }}>Post</span>
-        </button>
-
-        <button onClick={() => router.push('/notifications')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
-          <span style={{ fontSize: '22px' }}>🔔</span>
-          <span style={{ fontSize: '10px', marginTop: '2px' }}>Alerts</span>
-        </button>
-
-        <button onClick={() => router.push('/profile')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
-          <span style={{ fontSize: '22px' }}>👤</span>
-          <span style={{ fontSize: '10px', marginTop: '2px' }}>Profile</span>
-        </button>
-
-      </nav>
-
     </div>
   );
-          }
+                                                 }
