@@ -129,7 +129,6 @@ export default function Home() {
       {/* Top Header */}
       <header style={{ backgroundColor: '#0070f3', padding: '12px 15px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Agar aapke paas logo.png hai toh yahan img tag laga sakte hain */}
           <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Apna Circle</h1>
         </div>
         <div style={{ textAlign: 'right' }}>
@@ -221,33 +220,19 @@ export default function Home() {
           <span style={{ fontSize: '22px', fontWeight: 'bold' }}>➕</span><span style={{ fontSize: '10px', marginTop: '2px', fontWeight: 'bold' }}>Post</span>
         </button>
 
-        {/* 👈 YAHAN CHATS KA BUTTON ADD KIYA HAI */}
+        {/* CHATS BUTTON */}
         <button onClick={() => router.push('/chats')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
           <span style={{ fontSize: '22px' }}>💬</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Chats</span>
         </button>
         
-        {/* ALERTS BUTTON WITH RED BADGE */}
+        {/* ALERTS BUTTON */}
         <button onClick={() => router.push('/notifications')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1, position: 'relative' }}>
           <span style={{ fontSize: '22px' }}>🔔</span>
           <span style={{ fontSize: '10px', marginTop: '2px' }}>Alerts</span>
           
           {unreadCount > 0 && (
             <div style={{ 
-              position: 'absolute', 
-              top: '-2px', 
-              right: '15px', 
-              backgroundColor: 'red', 
-              color: 'white', 
-              borderRadius: '50%', 
-              minWidth: '18px', 
-              height: '18px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              fontSize: '10px', 
-              fontWeight: 'bold',
-              padding: '0 4px',
-              border: '2px solid white'
+              position: 'absolute', top: '-2px', right: '15px', backgroundColor: 'red', color: 'white', borderRadius: '50%', minWidth: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', padding: '0 4px', border: '2px solid white'
             }}>
               {unreadCount}
             </div>
@@ -259,17 +244,20 @@ export default function Home() {
         </button>
       </nav>
 
+      {/* FULL IMAGE MODAL (Yahan tag fix kiya gaya hai) */}
       {fullImage && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 2000 }}>
           <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 2001 }}>✕</button>
+          
           <TransformWrapper>
             <TransformComponent wrapperStyle={{ width: "100vw", height: "100vh" }} contentStyle={{ width: "100%", height: "100%" }}>
               <img src={fullImage} alt="Full Post" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-            </TransformWrapper>
+            </TransformComponent>
           </TransformWrapper>
+
         </div>
       )}
 
     </div>
   );
-      }
+}
