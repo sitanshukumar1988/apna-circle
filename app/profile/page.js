@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase';
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '../../lib/cropImage';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import Loader from '../components/Loader'; // Loader import kiya
+import Loader from '../components/Loader';
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -100,6 +100,7 @@ export default function Profile() {
       return;
     }
 
+    // Posts table mein bhi name aur avatar update karo
     await supabase.from('posts')
       .update({ 
         user_avatar: profile.avatar_url, 
@@ -109,7 +110,7 @@ export default function Profile() {
 
     alert('Profile and Posts Updated!');
     setSaving(false);
-    window.location.reload();
+    router.refresh(); 
   };
 
   const handleLogout = async () => {
@@ -117,7 +118,6 @@ export default function Profile() {
     router.push('/login');
   };
 
-  // Loader yahan use kiya hai
   if (!user) return <Loader />;
 
   // Crop Screen
@@ -137,8 +137,8 @@ export default function Profile() {
           />
         </div>
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, display: 'flex', justifyContent: 'space-around', padding: '20px', background: 'white' }}>
-          <button onClick={() => setImageSrc(null)} style={{ padding: '10px 20px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '5px' }}>Cancel</button>
-          <button onClick={handleCropSave} style={{ padding: '10px 20px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '5px' }}>Crop & Save</button>
+          <button onClick={() => setImageSrc(null)} style={{ padding: '10px 20px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold' }}>Cancel</button>
+          <button onClick={handleCropSave} style={{ padding: '10px 20px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold' }}>Crop & Save</button>
         </div>
       </div>
     );
@@ -160,11 +160,10 @@ export default function Profile() {
 
   // Main Profile Page
   return (
-    <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
+    <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
       
-      {/* Header with Back Button */}
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-        <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '15px' }}>←</button>
+        <button onClick={() => router.back()} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '15px' }}>←</button>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>My Profile</h1>
       </div>
       
@@ -181,25 +180,31 @@ export default function Profile() {
         )}
         <br /><br />
         <input type="file" accept="image/*" onChange={onFileChange} style={{ display: 'none' }} id="dp-upload" />
-        <label htmlFor="dp-upload" style={{ padding: '8px 15px', backgroundColor: '#0070f3', color: 'white', borderRadius: '5px', cursor: 'pointer' }}>
+        <label htmlFor="dp-upload" style={{ padding: '8px 15px', backgroundColor: '#0070f3', color: 'white', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
           {uploading ? 'Uploading...' : 'Change DP'}
         </label>
       </div>
 
-      {/* My Connections Button */}
-      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+      {/* 👈 Yahan Connections aur Saved Posts dono buttons hain */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '20px' }}>
         <button 
           onClick={() => router.push('/connections')} 
-          style={{ padding: '10px 20px', backgroundColor: '#333', color: 'white', border: 'none', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer' }}
+          style={{ padding: '10px 15px', backgroundColor: '#333', color: 'white', border: 'none', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer', flex: 1 }}
         >
-          👥 My Connections
+          👥 Connections
+        </button>
+        <button 
+          onClick={() => router.push('/saved')} 
+          style={{ padding: '10px 15px', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer', flex: 1 }}
+        >
+          🔖 Saved Posts
         </button>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        <input placeholder="Your Name" value={profile.name || ''} onChange={(e) => setProfile({ ...profile, name: e.target.value })} style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }} />
-        <textarea placeholder="Bio (e.g. Fitness lover)" value={profile.bio || ''} onChange={(e) => setProfile({ ...profile, bio: e.target.value })} rows="3" style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }} />
-        <input placeholder="City" value={profile.city || ''} onChange={(e) => setProfile({ ...profile, city: e.target.value })} style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', backgroundColor: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+        <input placeholder="Your Name" value={profile.name || ''} onChange={(e) => setProfile({ ...profile, name: e.target.value })} style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px', outline: 'none' }} />
+        <textarea placeholder="Bio (e.g. Fitness lover)" value={profile.bio || ''} onChange={(e) => setProfile({ ...profile, bio: e.target.value })} rows="3" style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px', outline: 'none' }} />
+        <input placeholder="City" value={profile.city || ''} onChange={(e) => setProfile({ ...profile, city: e.target.value })} style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px', outline: 'none' }} />
         
         <button onClick={handleSave} disabled={saving} style={{ padding: '12px', backgroundColor: saving ? '#ccc' : '#28a745', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }}>
           {saving ? 'Saving...' : 'Save Profile'}
@@ -212,4 +217,4 @@ export default function Profile() {
 
     </div>
   );
-        }
+}
