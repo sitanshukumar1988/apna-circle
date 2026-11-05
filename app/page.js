@@ -15,8 +15,8 @@ export default function Home() {
   const [fullImage, setFullImage] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0); 
   const [activeOptionsPost, setActiveOptionsPost] = useState(null); 
-  const [savedPosts, setSavedPosts] = useState([]); // 👈 Saved Posts ki state
-  const [toastMsg, setToastMsg] = useState(''); // 👈 Custom Popup ke liye state
+  const [savedPosts, setSavedPosts] = useState([]); 
+  const [toastMsg, setToastMsg] = useState(''); 
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -26,7 +26,6 @@ export default function Home() {
       setCurrentUser(user);
 
       if (user) {
-        // Notification count
         const { count } = await supabase
           .from('notifications')
           .select('*', { count: 'exact', head: true })
@@ -34,7 +33,6 @@ export default function Home() {
           .eq('is_read', false);
         if (count) setUnreadCount(count);
 
-        // 👈 User ki saved posts fetch karein
         const { data: savedData } = await supabase
           .from('saved_posts')
           .select('post_id')
@@ -94,7 +92,7 @@ export default function Home() {
 
   const showToast = (msg) => {
     setToastMsg(msg);
-    setTimeout(() => setToastMsg(''), 2500); // 2.5 second baad gayab ho jayega
+    setTimeout(() => setToastMsg(''), 2500);
   };
 
   const handleReaction = async (postId, reactionType) => {
@@ -151,25 +149,38 @@ export default function Home() {
     }
   };
 
-  const handleShare = (postId) => {
-    navigator.clipboard.writeText(window.location.href);
-    setActiveOptionsPost(null);
-    showToast("🔗 Link copied to clipboard!");
+  // 👈 NATIVE SHARE LOGIC
+  const handleShare = async (post) => {
+    const shareData = {
+      title: 'Apna Circle Post',
+      text: post.caption ? `Check out this post on Apna Circle: ${post.caption}` : 'Check out this post on Apna Circle!',
+      url: window.location.origin, // Filhaal homepage share hoga
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.origin);
+        showToast("🔗 Link copied to clipboard!");
+      }
+    } catch (error) {
+      console.log('Error sharing:', error);
+    } finally {
+      setActiveOptionsPost(null);
+    }
   };
 
-  // 👈 Save/Unsave Handler
   const handleSaveToggle = async (postId) => {
     const isSaved = savedPosts.includes(postId);
 
     if (isSaved) {
-      // Unsave
       const { error } = await supabase.from('saved_posts').delete().eq('post_id', postId).eq('user_id', currentUser.id);
       if (!error) {
         setSavedPosts(prev => prev.filter(id => id !== postId));
         showToast("Post removed from saved! 🔖");
       }
     } else {
-      // Save
       const { error } = await supabase.from('saved_posts').insert({ post_id: postId, user_id: currentUser.id });
       if (!error) {
         setSavedPosts(prev => [...prev, postId]);
@@ -207,7 +218,6 @@ export default function Home() {
             const postLikes = postLikesArray.length;
             const myLike = postLikesArray.find(like => like.user_id === currentUser?.id);
             const postCommentsCount = commentsData[post.id]?.length || 0;
-            const isSaved = savedPosts.includes(post.id); // 👈 Check if post is saved
 
             return (
               <div 
@@ -282,11 +292,11 @@ export default function Home() {
               Post Options
             </div>
 
-            <button onClick={() => handleShare(activeOptionsPost.id)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '15px' }}>
+            {/* 👈 Yahan handleShare me poora object bhej diya hai */}
+            <button onClick={() => handleShare(activeOptionsPost)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '15px' }}>
               🔗 Share
             </button>
 
-            {/* 👈 Dynamic Save/Unsave Button */}
             <button onClick={() => handleSaveToggle(activeOptionsPost.id)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '15px' }}>
               {savedPosts.includes(activeOptionsPost.id) ? '❌ Unsave Post' : '🔖 Save Post'}
             </button>
@@ -304,7 +314,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* 👈 CUSTOM TOAST MESSAGE (Alert ki jagah) */}
+      {/* CUSTOM TOAST MESSAGE */}
       {toastMsg && (
         <div style={{ position: 'fixed', bottom: '90px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#333', color: 'white', padding: '10px 20px', borderRadius: '20px', fontSize: '14px', zIndex: 4000, boxShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
           {toastMsg}
