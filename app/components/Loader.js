@@ -1,6 +1,6 @@
 export default function Loader() {
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '100px 0' }}>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
       <div style={{
         width: '40px',
         height: '40px',
@@ -17,4 +17,4 @@ export default function Loader() {
       `}</style>
     </div>
   );
-    }
+}
