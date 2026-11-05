@@ -9,7 +9,7 @@ const EMOJIS = ['❤️', '😂', '😮', '😢', '👍'];
 
 export default function Chat({ params }) {
   const [messages, setMessages] = useState([]);
-  const [reactions, setReactions] = useState({}); // { msgId: [ {emoji, user_id} ] }
+  const [reactions, setReactions] = useState({}); 
   const [newMessage, setNewMessage] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   const [currentUserProfile, setCurrentUserProfile] = useState(null);
@@ -18,7 +18,7 @@ export default function Chat({ params }) {
   const [loading, setLoading] = useState(true);
   const [canChat, setCanChat] = useState(false); 
   const [fullImage, setFullImage] = useState(null); 
-  const [selectedMsg, setSelectedMsg] = useState(null); // Action Menu state
+  const [selectedMsg, setSelectedMsg] = useState(null); 
 
   const router = useRouter();
   const bottomRef = useRef(null);
@@ -34,7 +34,6 @@ export default function Chat({ params }) {
       const { data: myProfile } = await supabase.from('profiles').select('name, avatar_url').eq('id', user.id).single();
       if (myProfile) setCurrentUserProfile(myProfile);
 
-      // Mutual follow check
       const { data: iFollow } = await supabase.from('follows').select('*').eq('follower_id', user.id).eq('following_id', otherUserId).maybeSingle();
       const { data: theyFollow } = await supabase.from('follows').select('*').eq('follower_id', otherUserId).eq('following_id', user.id).maybeSingle();
 
@@ -49,7 +48,6 @@ export default function Chat({ params }) {
       const { data: profile } = await supabase.from('profiles').select('name, avatar_url').eq('id', otherUserId).single();
       if (profile) setOtherUser(profile);
 
-      // Fetch Messages
       const { data: msgs } = await supabase
         .from('messages')
         .select('*')
@@ -58,7 +56,6 @@ export default function Chat({ params }) {
 
       if (msgs) setMessages(msgs);
 
-      // Fetch Reactions
       const msgIds = msgs?.map(m => m.id) || [];
       if (msgIds.length > 0) {
         const { data: rxns } = await supabase.from('message_reactions').select('*').in('message_id', msgIds);
@@ -77,7 +74,6 @@ export default function Chat({ params }) {
     initChat();
   }, [otherUserId, router]);
 
-  // Real-time Listener (Message, Delete, aur Reaction ke liye)
   useEffect(() => {
     if (!currentUser || !canChat) return;
 
@@ -221,7 +217,6 @@ export default function Chat({ params }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#e5ddd5' }}>
       
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', padding: '12px 15px', backgroundColor: 'white', borderBottom: '1px solid #ddd', flexShrink: 0, zIndex: 10 }}>
         <button onClick={() => router.back()} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '10px' }}>←</button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -234,7 +229,6 @@ export default function Chat({ params }) {
         </div>
       </div>
 
-      {/* Messages Area */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {messages.map((msg) => {
           const isMine = msg.sender_id === currentUser.id;
@@ -243,7 +237,6 @@ export default function Chat({ params }) {
           return (
             <div key={msg.id} style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start', position: 'relative', marginBottom: msgReactions.length > 0 ? '15px' : '0' }}>
               
-              {/* Message Bubble (Text Selection Disabled) */}
               <div 
                 onClick={() => setSelectedMsg(msg)}
                 onContextMenu={(e) => e.preventDefault()} 
@@ -261,21 +254,31 @@ export default function Chat({ params }) {
                   position: 'relative',
                   userSelect: 'none', 
                   WebkitUserSelect: 'none', 
-                  msUserSelect: 'none' 
+                  WebkitTouchCallout: 'none', 
                 }}
               >
                 {msg.image_url && (
-                  <img src={msg.image_url} alt="Chat" onClick={(e) => { e.stopPropagation(); setFullImage(msg.image_url); }} style={{ width: '100%', borderRadius: '6px', maxHeight: '250px', objectFit: 'cover', cursor: 'pointer' }} />
+                  <div style={{ pointerEvents: 'auto' }} onClick={(e) => { e.stopPropagation(); setFullImage(msg.image_url); }}>
+                    <img 
+                      src={msg.image_url} 
+                      alt="Chat" 
+                      style={{ width: '100%', borderRadius: '6px', maxHeight: '250px', objectFit: 'cover', cursor: 'pointer', pointerEvents: 'none' }} 
+                    />
+                  </div>
                 )}
-                {msg.content && <span style={{ color: '#000' }}>{msg.content}</span>}
+
+                {msg.content && (
+                  <span style={{ color: '#000', pointerEvents: 'none' }}>
+                    {msg.content}
+                  </span>
+                )}
                 
-                <span style={{ fontSize: '10px', color: '#999', alignSelf: 'flex-end', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <span style={{ fontSize: '10px', color: '#999', alignSelf: 'flex-end', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '3px', pointerEvents: 'none' }}>
                   {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   {isMine && <span style={{ color: '#34B7F1', fontSize: '12px' }}>✓✓</span>}
                 </span>
               </div>
 
-              {/* Message Reactions Display */}
               {msgReactions.length > 0 && (
                 <div style={{ 
                   position: 'absolute', 
@@ -289,7 +292,8 @@ export default function Chat({ params }) {
                   boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
                   display: 'flex',
                   gap: '2px',
-                  border: '1px solid #eee'
+                  border: '1px solid #eee',
+                  zIndex: 2
                 }}>
                   {msgReactions.map((r, i) => <span key={i}>{r.reaction}</span>)}
                 </div>
@@ -301,7 +305,6 @@ export default function Chat({ params }) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input Area */}
       <div style={{ display: 'flex', gap: '8px', padding: '10px 15px', backgroundColor: 'white', alignItems: 'center', flexShrink: 0, width: '100%', boxSizing: 'border-box' }}>
         <div>
           <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} id="chat-image-upload" />
@@ -327,12 +330,10 @@ export default function Chat({ params }) {
         </button>
       </div>
 
-      {/* WHATSAPP STYLE ACTION MENU (Reactions + Delete) */}
       {selectedMsg && (
         <div onClick={() => setSelectedMsg(null)} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', borderRadius: '12px', width: '85%', maxWidth: '340px', overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
             
-            {/* Emojis Bar */}
             <div style={{ display: 'flex', justifyContent: 'space-around', padding: '12px', borderBottom: '1px solid #eee', backgroundColor: '#f9f9f9' }}>
               {EMOJIS.map(emoji => (
                 <button 
@@ -345,7 +346,6 @@ export default function Chat({ params }) {
               ))}
             </div>
 
-            {/* Delete Options */}
             <div style={{ padding: '10px 0' }}>
               {selectedMsg.sender_id === currentUser.id ? (
                 <>
@@ -369,18 +369,17 @@ export default function Chat({ params }) {
         </div>
       )}
 
-      {/* FULL SCREEN IMAGE MODAL */}
       {fullImage && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 2000 }}>
           <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 2001 }}>✕</button>
           <TransformWrapper>
             <TransformComponent wrapperStyle={{ width: "100vw", height: "100vh" }} contentStyle={{ width: "100%", height: "100%" }}>
               <img src={fullImage} alt="Full Chat" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-            </TransformWrapper>
+            </TransformComponent> {/* 👈 Yahan fix kar diya hai */}
           </TransformWrapper>
         </div>
       )}
 
     </div>
   );
-    }
+        }
