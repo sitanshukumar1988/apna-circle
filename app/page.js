@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link'; // 👈 Import kiya
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import Loader from './components/Loader';
 import LanguageSwitcher from './components/LanguageSwitcher';
@@ -333,23 +334,24 @@ export default function Home() {
         </div>
       )}
 
+      {/* 👈 BOTTOM NAVIGATION BAR (Yahan <Link> use kiya hai) */}
       <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px 0', position: 'fixed', bottom: 0, left: 0, width: '100%', zIndex: 1000, boxShadow: '0 -1px 5px rgba(0,0,0,0.1)' }}>
-        <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3', flex: 1 }}>
+        <Link href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#0070f3', flex: 1, textDecoration: 'none' }}>
           <span style={{ fontSize: '22px' }}>🏠</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Home</span>
-        </button>
-        <button onClick={() => router.push('/search')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
+        </Link>
+        <Link href="/search" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#666', flex: 1, textDecoration: 'none' }}>
           <span style={{ fontSize: '22px' }}>🔍</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Search</span>
-        </button>
-        <button onClick={() => router.push('/connections')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
+        </Link>
+        <Link href="/connections" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#666', flex: 1, textDecoration: 'none' }}>
           <span style={{ fontSize: '22px' }}>👥</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Network</span>
-        </button>
-        <button onClick={() => router.push('/post')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3', flex: 1 }}>
+        </Link>
+        <Link href="/post" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#0070f3', flex: 1, textDecoration: 'none' }}>
           <span style={{ fontSize: '22px', fontWeight: 'bold' }}>➕</span><span style={{ fontSize: '10px', marginTop: '2px', fontWeight: 'bold' }}>Post</span>
-        </button>
-        <button onClick={() => router.push('/chats')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
+        </Link>
+        <Link href="/chats" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#666', flex: 1, textDecoration: 'none' }}>
           <span style={{ fontSize: '22px' }}>💬</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Chats</span>
-        </button>
-        <button onClick={() => router.push('/notifications')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1, position: 'relative' }}>
+        </Link>
+        <Link href="/notifications" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#666', flex: 1, position: 'relative', textDecoration: 'none' }}>
           <span style={{ fontSize: '22px' }}>🔔</span>
           <span style={{ fontSize: '10px', marginTop: '2px' }}>Alerts</span>
           {unreadCount > 0 && (
@@ -357,10 +359,10 @@ export default function Home() {
               {unreadCount}
             </div>
           )}
-        </button>
-        <button onClick={() => router.push('/profile')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
+        </Link>
+        <Link href="/profile" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#666', flex: 1, textDecoration: 'none' }}>
           <span style={{ fontSize: '22px' }}>👤</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Profile</span>
-        </button>
+        </Link>
       </nav>
 
       {fullImage && (
@@ -376,4 +378,4 @@ export default function Home() {
 
     </div>
   );
-    }
+}
