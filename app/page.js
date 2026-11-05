@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/navigation';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import Loader from './components/Loader';
-import LanguageSwitcher from './components/LanguageSwitcher'; // 👈 Import kiya
+import LanguageSwitcher from './components/LanguageSwitcher';
 
 export default function Home() {
   const [posts, setPosts] = useState([]);
@@ -19,6 +19,10 @@ export default function Home() {
   const [savedPosts, setSavedPosts] = useState([]); 
   const [toastMsg, setToastMsg] = useState(''); 
   const [loading, setLoading] = useState(true);
+  
+  // 👈 State: Language Check karne ke liye
+  const [isHindi, setIsHindi] = useState(false); 
+
   const router = useRouter();
 
   const getReactionEmoji = (type) => {
@@ -32,6 +36,9 @@ export default function Home() {
   };
 
   useEffect(() => {
+    // 👈 Check karein ki kya language Hindi set hai?
+    setIsHindi(document.cookie.includes('googtrans=/en/hi'));
+
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setCurrentUser(user);
@@ -208,12 +215,23 @@ export default function Home() {
       {/* Top Header */}
       <header style={{ backgroundColor: '#0070f3', padding: '12px 15px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Apna Circle</h1>
-          <LanguageSwitcher /> {/* 👈 Yahan Button Lagaya */}
+          
+          {/* 👈 App Name with notranslate and condition */}
+          <h1 className="notranslate" style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>
+            {isHindi ? 'अपना सर्कल' : 'Apna Circle'}
+          </h1>
+          
+          <LanguageSwitcher /> 
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <p style={{ margin: 0, fontSize: '9px', fontWeight: 'bold', opacity: 0.9 }}>FOUNDED BY SITANSHU KUMAR</p>
-          <p style={{ margin: 0, fontSize: '8px', opacity: 0.8 }}>With SDRHP Team</p>
+        
+        {/* 👈 Founder Name with notranslate and condition */}
+        <div className="notranslate" style={{ textAlign: 'right' }}>
+          <p style={{ margin: 0, fontSize: '9px', fontWeight: 'bold', opacity: 0.9 }}>
+            {isHindi ? 'सितांशु कुमार द्वारा संस्थापित' : 'FOUNDED BY SITANSHU KUMAR'}
+          </p>
+          <p style={{ margin: 0, fontSize: '8px', opacity: 0.8 }}>
+            {isHindi ? 'SDRHP टीम के साथ' : 'With SDRHP Team'}
+          </p>
         </div>
       </header>
 
@@ -242,7 +260,8 @@ export default function Home() {
                     ) : (
                       <div style={{ width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</div>
                     )}
-                    <span style={{ fontWeight: 'bold' }}>{displayName}</span>
+                    {/* 👈 User Name notranslate so it doesn't turn into weird Hindi */}
+                    <span className="notranslate" style={{ fontWeight: 'bold' }}>{displayName}</span>
                   </div>
                   
                   <button 
@@ -365,15 +384,4 @@ export default function Home() {
 
       {fullImage && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 2000 }}>
-          <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 2001 }}>✕</button>
-          <TransformWrapper>
-            <TransformComponent wrapperStyle={{ width: "100vw", height: "100vh" }} contentStyle={{ width: "100%", height: "100%" }}>
-              <img src={fullImage} alt="Full Post" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-            </TransformComponent>
-          </TransformWrapper>
-        </div>
-      )}
-
-    </div>
-  );
-}
+          <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color
