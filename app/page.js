@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/navigation';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import Loader from './components/Loader';
+import LanguageSwitcher from './components/LanguageSwitcher'; // 👈 Import kiya
 
 export default function Home() {
   const [posts, setPosts] = useState([]);
@@ -20,7 +21,6 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Helper function emoji ke liye
   const getReactionEmoji = (type) => {
     switch(type) {
       case 'love': return '❤️';
@@ -207,8 +207,9 @@ export default function Home() {
       
       {/* Top Header */}
       <header style={{ backgroundColor: '#0070f3', padding: '12px 15px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Apna Circle</h1>
+          <LanguageSwitcher /> {/* 👈 Yahan Button Lagaya */}
         </div>
         <div style={{ textAlign: 'right' }}>
           <p style={{ margin: 0, fontSize: '9px', fontWeight: 'bold', opacity: 0.9 }}>FOUNDED BY SITANSHU KUMAR</p>
@@ -271,7 +272,6 @@ export default function Home() {
                     </button>
                   </div>
 
-                  {/* 👈 YAHAN DYNAMIC EMOJI FIX KIYA HAI */}
                   {postLikes > 0 && (
                     <div onClick={() => router.push(`/likes/${String(post.id)}`)} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', backgroundColor: '#f0f2f5', padding: '2px 8px', borderRadius: '10px', fontSize: '13px', color: '#555' }}>
                       <span style={{ fontSize: '16px' }}>{getReactionEmoji(postLikesArray[0]?.reaction_type)}</span> 
@@ -376,4 +376,4 @@ export default function Home() {
 
     </div>
   );
-    }
+}
