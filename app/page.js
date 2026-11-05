@@ -14,6 +14,7 @@ export default function Home() {
   const [showReactionPicker, setShowReactionPicker] = useState(null);
   const [fullImage, setFullImage] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0); 
+  const [activeOptionsPost, setActiveOptionsPost] = useState(null); // 👈 Post Options ke liye state
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -121,6 +122,29 @@ export default function Home() {
     setShowReactionPicker(null);
   };
 
+  // 👈 Post Delete karne ka function
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm("Kya aap sach me ye post delete karna chahte hain?")) return;
+    
+    const { error } = await supabase.from('posts').delete().eq('id', postId);
+    
+    if (error) {
+      alert("Post delete nahi ho payi: " + error.message);
+    } else {
+      // Screen se post hata do
+      setPosts((prev) => prev.filter(p => p.id !== postId));
+      setActiveOptionsPost(null);
+    }
+  };
+
+  // 👈 Share link copy function
+  const handleShare = (postId) => {
+    const postUrl = `${window.location.origin}/post/${postId}`; // Future me single post page banega toh ye link kaam aayega
+    navigator.clipboard.writeText(window.location.href);
+    alert("Post ka link copy ho gaya hai! Ab aap ise doston ko bhej sakte hain.");
+    setActiveOptionsPost(null);
+  };
+
   if (loading) return <Loader />;
 
   return (
@@ -155,13 +179,24 @@ export default function Home() {
                 key={post.id} 
                 style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}
               >
-                <div onClick={() => router.push(`/user/${post.user_id}`)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 15px', borderBottom: '1px solid #eee', cursor: 'pointer' }}>
-                  {displayAvatar ? (
-                    <img src={displayAvatar} alt="DP" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} />
-                  ) : (
-                    <div style={{ width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</div>
-                  )}
-                  <span style={{ fontWeight: 'bold' }}>{displayName}</span>
+                {/* Post Header with Three Dots */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
+                  <div onClick={() => router.push(`/user/${post.user_id}`)} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    {displayAvatar ? (
+                      <img src={displayAvatar} alt="DP" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</div>
+                    )}
+                    <span style={{ fontWeight: 'bold' }}>{displayName}</span>
+                  </div>
+                  
+                  {/* 👈 Teen Dots Button */}
+                  <button 
+                    onClick={() => setActiveOptionsPost(post)} 
+                    style={{ background: 'none', border: 'none', fontSize: '24px', fontWeight: 'bold', cursor: 'pointer', color: '#666', padding: '0 5px' }}
+                  >
+                    ⋮
+                  </button>
                 </div>
                 
                 <img src={post.image_url} alt="Post" onClick={() => setFullImage(post.image_url)} style={{ width: '100%', display: 'block', cursor: 'pointer' }} />
@@ -205,7 +240,41 @@ export default function Home() {
         )}
       </main>
 
-      {/* Fixed Bottom Navigation Bar with Badge */}
+      {/* 👈 POST OPTIONS MODAL (Share, Save, Delete) */}
+      {activeOptionsPost && (
+        <div onClick={() => setActiveOptionsPost(null)} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', width: '100%', maxWidth: '500px', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', paddingBottom: '20px', overflow: 'hidden' }}>
+            
+            <div style={{ padding: '15px', textAlign: 'center', borderBottom: '1px solid #eee', fontWeight: 'bold', color: '#666' }}>
+              Post Options
+            </div>
+
+            {/* Share Option */}
+            <button onClick={() => handleShare(activeOptionsPost.id)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '15px' }}>
+              🔗 Share
+            </button>
+
+            {/* Save Option (Placeholder for now) */}
+            <button onClick={() => { alert("Save feature jald aa raha hai!"); setActiveOptionsPost(null); }} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '15px' }}>
+              🔖 Save
+            </button>
+
+            {/* 👈 DELETE OPTION (Sirf tab dikhega jab post currentUser ki ho) */}
+            {activeOptionsPost.user_id === currentUser?.id && (
+              <button onClick={() => handleDeletePost(activeOptionsPost.id)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontSize: '16px', color: '#dc3545', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                🗑️ Delete Post
+              </button>
+            )}
+
+            {/* Cancel Option */}
+            <button onClick={() => setActiveOptionsPost(null)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', textAlign: 'center', fontSize: '16px', fontWeight: 'bold', color: '#0070f3', cursor: 'pointer' }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Fixed Bottom Navigation Bar */}
       <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px 0', position: 'fixed', bottom: 0, left: 0, width: '100%', zIndex: 1000, boxShadow: '0 -1px 5px rgba(0,0,0,0.1)' }}>
         <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3', flex: 1 }}>
           <span style={{ fontSize: '22px' }}>🏠</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Home</span>
@@ -219,45 +288,34 @@ export default function Home() {
         <button onClick={() => router.push('/post')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3', flex: 1 }}>
           <span style={{ fontSize: '22px', fontWeight: 'bold' }}>➕</span><span style={{ fontSize: '10px', marginTop: '2px', fontWeight: 'bold' }}>Post</span>
         </button>
-
-        {/* CHATS BUTTON */}
         <button onClick={() => router.push('/chats')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
           <span style={{ fontSize: '22px' }}>💬</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Chats</span>
         </button>
-        
-        {/* ALERTS BUTTON */}
         <button onClick={() => router.push('/notifications')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1, position: 'relative' }}>
           <span style={{ fontSize: '22px' }}>🔔</span>
           <span style={{ fontSize: '10px', marginTop: '2px' }}>Alerts</span>
-          
           {unreadCount > 0 && (
-            <div style={{ 
-              position: 'absolute', top: '-2px', right: '15px', backgroundColor: 'red', color: 'white', borderRadius: '50%', minWidth: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', padding: '0 4px', border: '2px solid white'
-            }}>
+            <div style={{ position: 'absolute', top: '-2px', right: '15px', backgroundColor: 'red', color: 'white', borderRadius: '50%', minWidth: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', padding: '0 4px', border: '2px solid white' }}>
               {unreadCount}
             </div>
           )}
         </button>
-
         <button onClick={() => router.push('/profile')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
           <span style={{ fontSize: '22px' }}>👤</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Profile</span>
         </button>
       </nav>
 
-      {/* FULL IMAGE MODAL (Yahan tag fix kiya gaya hai) */}
       {fullImage && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 2000 }}>
           <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 2001 }}>✕</button>
-          
           <TransformWrapper>
             <TransformComponent wrapperStyle={{ width: "100vw", height: "100vh" }} contentStyle={{ width: "100%", height: "100%" }}>
               <img src={fullImage} alt="Full Post" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </TransformComponent>
           </TransformWrapper>
-
         </div>
       )}
 
     </div>
   );
-}
+                                 }
