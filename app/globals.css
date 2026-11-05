@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Aapka purana code (App Zoom Disable etc.) */
+/* App Zoom Disable & Base Styles */
 html, body {
   touch-action: pan-x pan-y; 
   -webkit-text-size-adjust: 100%; 
@@ -14,9 +14,23 @@ html, body {
   color: #333;
 }
 
-/* 👇 GOOGLE TRANSLATE BANNER AUR ICON 100% HIDE KARNE KA CSS 👇 */
+/* 👇 POORE APP ME TEXT SELECTION (COPY/SEARCH MENU) BAND KARNE KA CODE 👇 */
+* {
+  -webkit-touch-callout: none !important; /* Mobile long-press menu block */
+  -webkit-user-select: none !important;   /* Chrome/Safari text selection block */
+  -khtml-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
 
-/* 1. Top wale pure banner aur frame ko hide karein */
+/* Sirf input aur textarea me typing/select allow rahega (Chat/Comments ke liye) */
+input, textarea {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
+/* 👇 GOOGLE TRANSLATE BANNER AUR ICON HIDE KARNE KA CSS 👇 */
 iframe.skiptranslate {
   display: none !important;
   visibility: hidden !important;
@@ -27,13 +41,11 @@ iframe.skiptranslate {
   visibility: hidden !important;
 }
 
-/* 2. Body ko upar shift hone se rokna (jo Google karta hai) */
 body {
   top: 0px !important; 
   position: static !important;
 }
 
-/* 3. Tooltip aur highlight hide karna */
 #goog-gt-tt, .goog-te-balloon-frame {
   display: none !important;
 }
@@ -43,7 +55,6 @@ body {
   box-shadow: none !important;
 }
 
-/* 4. Google ka logo aur select box hide karna */
 .goog-logo-link, .goog-te-gadget span {
   display: none !important;
 }
