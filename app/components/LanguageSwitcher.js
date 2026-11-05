@@ -22,32 +22,18 @@ export default function LanguageSwitcher() {
         );
       };
     }
-
-    // 2. Purani language cookie check karein
-    const match = document.cookie.match(/(^|;) ?googtrans=([^;]*)(;|$)/);
-    if (match) {
-      const lang = match[2].split('/')[2];
-      const selectElement = document.querySelector('.goog-te-combo');
-      if (selectElement && selectElement.value !== lang) {
-        selectElement.value = lang;
-        selectElement.dispatchEvent(new Event('change'));
-      }
-    }
   }, []);
 
   const changeLanguage = (langCode) => {
-    const selectElement = document.querySelector('.goog-te-combo');
-    if (selectElement) {
-      selectElement.value = langCode;
-      selectElement.dispatchEvent(new Event('change'));
-    }
+    // Cookie set karein aur page reload karein
+    document.cookie = `googtrans=/en/${langCode}; path=/; max-age=31536000`;
+    window.location.reload();
   };
 
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
       <div id="google_translate_element" style={{ display: 'none' }}></div>
 
-      {/* 👈 Yahan Text Change kiya hai */}
       <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: '20px', padding: '3px', border: '1px solid rgba(255,255,255,0.3)' }}>
         <button
           onClick={() => changeLanguage('en')}
@@ -64,4 +50,4 @@ export default function LanguageSwitcher() {
       </div>
     </div>
   );
-        }
+  }
