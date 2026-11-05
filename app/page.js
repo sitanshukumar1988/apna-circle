@@ -14,7 +14,9 @@ export default function Home() {
   const [showReactionPicker, setShowReactionPicker] = useState(null);
   const [fullImage, setFullImage] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0); 
-  const [activeOptionsPost, setActiveOptionsPost] = useState(null); // 👈 Post Options ke liye state
+  const [activeOptionsPost, setActiveOptionsPost] = useState(null); 
+  const [savedPosts, setSavedPosts] = useState([]); // 👈 Saved Posts ki state
+  const [toastMsg, setToastMsg] = useState(''); // 👈 Custom Popup ke liye state
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -24,12 +26,20 @@ export default function Home() {
       setCurrentUser(user);
 
       if (user) {
+        // Notification count
         const { count } = await supabase
           .from('notifications')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id)
           .eq('is_read', false);
         if (count) setUnreadCount(count);
+
+        // 👈 User ki saved posts fetch karein
+        const { data: savedData } = await supabase
+          .from('saved_posts')
+          .select('post_id')
+          .eq('user_id', user.id);
+        if (savedData) setSavedPosts(savedData.map(s => s.post_id));
       }
 
       const { data: postsData } = await supabase
@@ -82,6 +92,11 @@ export default function Home() {
     fetchData();
   }, []);
 
+  const showToast = (msg) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(''), 2500); // 2.5 second baad gayab ho jayega
+  };
+
   const handleReaction = async (postId, reactionType) => {
     if (!currentUser) return;
 
@@ -122,26 +137,45 @@ export default function Home() {
     setShowReactionPicker(null);
   };
 
-  // 👈 Post Delete karne ka function
   const handleDeletePost = async (postId) => {
     if (!window.confirm("Kya aap sach me ye post delete karna chahte hain?")) return;
     
     const { error } = await supabase.from('posts').delete().eq('id', postId);
     
     if (error) {
-      alert("Post delete nahi ho payi: " + error.message);
+      showToast("Post delete nahi ho payi: " + error.message);
     } else {
-      // Screen se post hata do
       setPosts((prev) => prev.filter(p => p.id !== postId));
       setActiveOptionsPost(null);
+      showToast("Post deleted successfully!");
     }
   };
 
-  // 👈 Share link copy function
   const handleShare = (postId) => {
-    const postUrl = `${window.location.origin}/post/${postId}`; // Future me single post page banega toh ye link kaam aayega
     navigator.clipboard.writeText(window.location.href);
-    alert("Post ka link copy ho gaya hai! Ab aap ise doston ko bhej sakte hain.");
+    setActiveOptionsPost(null);
+    showToast("🔗 Link copied to clipboard!");
+  };
+
+  // 👈 Save/Unsave Handler
+  const handleSaveToggle = async (postId) => {
+    const isSaved = savedPosts.includes(postId);
+
+    if (isSaved) {
+      // Unsave
+      const { error } = await supabase.from('saved_posts').delete().eq('post_id', postId).eq('user_id', currentUser.id);
+      if (!error) {
+        setSavedPosts(prev => prev.filter(id => id !== postId));
+        showToast("Post removed from saved! 🔖");
+      }
+    } else {
+      // Save
+      const { error } = await supabase.from('saved_posts').insert({ post_id: postId, user_id: currentUser.id });
+      if (!error) {
+        setSavedPosts(prev => [...prev, postId]);
+        showToast("Post saved successfully! 🔖");
+      }
+    }
     setActiveOptionsPost(null);
   };
 
@@ -173,13 +207,13 @@ export default function Home() {
             const postLikes = postLikesArray.length;
             const myLike = postLikesArray.find(like => like.user_id === currentUser?.id);
             const postCommentsCount = commentsData[post.id]?.length || 0;
+            const isSaved = savedPosts.includes(post.id); // 👈 Check if post is saved
 
             return (
               <div 
                 key={post.id} 
                 style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}
               >
-                {/* Post Header with Three Dots */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
                   <div onClick={() => router.push(`/user/${post.user_id}`)} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
                     {displayAvatar ? (
@@ -190,7 +224,6 @@ export default function Home() {
                     <span style={{ fontWeight: 'bold' }}>{displayName}</span>
                   </div>
                   
-                  {/* 👈 Teen Dots Button */}
                   <button 
                     onClick={() => setActiveOptionsPost(post)} 
                     style={{ background: 'none', border: 'none', fontSize: '24px', fontWeight: 'bold', cursor: 'pointer', color: '#666', padding: '0 5px' }}
@@ -240,7 +273,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* 👈 POST OPTIONS MODAL (Share, Save, Delete) */}
+      {/* POST OPTIONS MODAL */}
       {activeOptionsPost && (
         <div onClick={() => setActiveOptionsPost(null)} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
           <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', width: '100%', maxWidth: '500px', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', paddingBottom: '20px', overflow: 'hidden' }}>
@@ -249,28 +282,32 @@ export default function Home() {
               Post Options
             </div>
 
-            {/* Share Option */}
             <button onClick={() => handleShare(activeOptionsPost.id)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '15px' }}>
               🔗 Share
             </button>
 
-            {/* Save Option (Placeholder for now) */}
-            <button onClick={() => { alert("Save feature jald aa raha hai!"); setActiveOptionsPost(null); }} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '15px' }}>
-              🔖 Save
+            {/* 👈 Dynamic Save/Unsave Button */}
+            <button onClick={() => handleSaveToggle(activeOptionsPost.id)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '15px' }}>
+              {savedPosts.includes(activeOptionsPost.id) ? '❌ Unsave Post' : '🔖 Save Post'}
             </button>
 
-            {/* 👈 DELETE OPTION (Sirf tab dikhega jab post currentUser ki ho) */}
             {activeOptionsPost.user_id === currentUser?.id && (
               <button onClick={() => handleDeletePost(activeOptionsPost.id)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontSize: '16px', color: '#dc3545', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
                 🗑️ Delete Post
               </button>
             )}
 
-            {/* Cancel Option */}
             <button onClick={() => setActiveOptionsPost(null)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', textAlign: 'center', fontSize: '16px', fontWeight: 'bold', color: '#0070f3', cursor: 'pointer' }}>
               Cancel
             </button>
           </div>
+        </div>
+      )}
+
+      {/* 👈 CUSTOM TOAST MESSAGE (Alert ki jagah) */}
+      {toastMsg && (
+        <div style={{ position: 'fixed', bottom: '90px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#333', color: 'white', padding: '10px 20px', borderRadius: '20px', fontSize: '14px', zIndex: 4000, boxShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
+          {toastMsg}
         </div>
       )}
 
@@ -318,4 +355,4 @@ export default function Home() {
 
     </div>
   );
-                                 }
+}
