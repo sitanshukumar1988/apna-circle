@@ -15,7 +15,7 @@ export default function LanguageSwitcher() {
         new window.google.translate.TranslateElement(
           {
             pageLanguage: 'en',
-            includedLanguages: 'en,hi', // Sirf English aur Hindi
+            includedLanguages: 'en,hi',
             autoDisplay: false,
           },
           'google_translate_element'
@@ -23,10 +23,10 @@ export default function LanguageSwitcher() {
       };
     }
 
-    // 2. Purani language cookie check karein (agar user ne pehle change ki thi)
+    // 2. Purani language cookie check karein
     const match = document.cookie.match(/(^|;) ?googtrans=([^;]*)(;|$)/);
     if (match) {
-      const lang = match[2].split('/')[2]; // 'en' ya 'hi'
+      const lang = match[2].split('/')[2];
       const selectElement = document.querySelector('.goog-te-combo');
       if (selectElement && selectElement.value !== lang) {
         selectElement.value = lang;
@@ -36,7 +36,6 @@ export default function LanguageSwitcher() {
   }, []);
 
   const changeLanguage = (langCode) => {
-    // Google Translate ke hidden dropdown ko select karein
     const selectElement = document.querySelector('.goog-te-combo');
     if (selectElement) {
       selectElement.value = langCode;
@@ -46,24 +45,23 @@ export default function LanguageSwitcher() {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
-      {/* Google Translate ka hidden container (Isko dikhne ki zaroorat nahi) */}
       <div id="google_translate_element" style={{ display: 'none' }}></div>
 
-      {/* Hamare professional buttons */}
+      {/* 👈 Yahan Text Change kiya hai */}
       <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: '20px', padding: '3px', border: '1px solid rgba(255,255,255,0.3)' }}>
         <button
           onClick={() => changeLanguage('en')}
-          style={{ padding: '4px 12px', borderRadius: '15px', border: 'none', backgroundColor: 'white', color: '#0070f3', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}
+          style={{ padding: '4px 10px', borderRadius: '15px', border: 'none', backgroundColor: 'white', color: '#0070f3', fontWeight: 'bold', cursor: 'pointer', fontSize: '11px' }}
         >
-          EN
+          English
         </button>
         <button
           onClick={() => changeLanguage('hi')}
-          style={{ padding: '4px 12px', borderRadius: '15px', border: 'none', backgroundColor: 'transparent', color: 'white', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px', marginLeft: '2px' }}
+          style={{ padding: '4px 10px', borderRadius: '15px', border: 'none', backgroundColor: 'transparent', color: 'white', fontWeight: 'bold', cursor: 'pointer', fontSize: '11px', marginLeft: '2px' }}
         >
-          HI
+          हिंदी
         </button>
       </div>
     </div>
   );
-            }
+        }
