@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* App Zoom Disable & Base Styles */
 html, body {
   touch-action: pan-x pan-y; 
   -webkit-text-size-adjust: 100%; 
@@ -12,57 +11,25 @@ html, body {
   font-family: Arial, sans-serif;
   background-color: #f3f4f6;
   color: #333;
-}
-
-/* 👇 POORE APP ME TEXT SELECTION (COPY/SEARCH MENU) BAND KARNE KA CODE 👇 */
-* {
-  -webkit-touch-callout: none !important; /* Mobile long-press menu block */
-  -webkit-user-select: none !important;   /* Chrome/Safari text selection block */
+  
+  /* 👇 Mobile text selection ko block karne ke liye */
+  -webkit-touch-callout: none !important; 
+  -webkit-user-select: none !important;   
   -khtml-user-select: none !important;
   -moz-user-select: none !important;
   -ms-user-select: none !important;
   user-select: none !important;
 }
 
-/* Sirf input aur textarea me typing/select allow rahega (Chat/Comments ke liye) */
+/* Input aur textarea me allow karein */
 input, textarea {
   -webkit-user-select: text !important;
   user-select: text !important;
 }
 
-/* 👇 GOOGLE TRANSLATE BANNER AUR ICON HIDE KARNE KA CSS 👇 */
-iframe.skiptranslate {
-  display: none !important;
-  visibility: hidden !important;
-}
-
-.goog-te-banner-frame {
-  display: none !important;
-  visibility: hidden !important;
-}
-
-body {
-  top: 0px !important; 
-  position: static !important;
-}
-
-#goog-gt-tt, .goog-te-balloon-frame {
-  display: none !important;
-}
-
-.goog-text-highlight {
-  background: none !important;
-  box-shadow: none !important;
-}
-
-.goog-logo-link, .goog-te-gadget span {
-  display: none !important;
-}
-
-.goog-te-gadget {
-  height: 0 !important;
-  overflow: hidden !important;
-  display: none !important;
-  color: transparent !important;
-  font-size: 0px !important;
-  }
+/* Google Translate CSS */
+iframe.skiptranslate, .goog-te-banner-frame { display: none !important; }
+body { top: 0px !important; position: static !important; }
+#goog-gt-tt, .goog-te-balloon-frame, .goog-text-highlight { display: none !important; background: none !important; box-shadow: none !important; }
+.goog-logo-link, .goog-te-gadget span { display: none !important; }
+.goog-te-gadget { height: 0 !important; overflow: hidden !important; display: none !important; color: transparent !important; font-size: 0px !important; }
