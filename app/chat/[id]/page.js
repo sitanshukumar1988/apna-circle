@@ -5,8 +5,11 @@ import { supabase } from '../../../lib/supabase';
 import Loader from '../../components/Loader'; 
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
+const EMOJIS = ['❤️', '😂', '😮', '😢', '👍'];
+
 export default function Chat({ params }) {
   const [messages, setMessages] = useState([]);
+  const [reactions, setReactions] = useState({}); // { msgId: [ {emoji, user_id} ] }
   const [newMessage, setNewMessage] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   const [currentUserProfile, setCurrentUserProfile] = useState(null);
@@ -15,8 +18,7 @@ export default function Chat({ params }) {
   const [loading, setLoading] = useState(true);
   const [canChat, setCanChat] = useState(false); 
   const [fullImage, setFullImage] = useState(null); 
-  
-  const [deleteModalMsg, setDeleteModalMsg] = useState(null); // 👈 Delete popup ke liye state
+  const [selectedMsg, setSelectedMsg] = useState(null); // Action Menu state
 
   const router = useRouter();
   const bottomRef = useRef(null);
@@ -32,6 +34,7 @@ export default function Chat({ params }) {
       const { data: myProfile } = await supabase.from('profiles').select('name, avatar_url').eq('id', user.id).single();
       if (myProfile) setCurrentUserProfile(myProfile);
 
+      // Mutual follow check
       const { data: iFollow } = await supabase.from('follows').select('*').eq('follower_id', user.id).eq('following_id', otherUserId).maybeSingle();
       const { data: theyFollow } = await supabase.from('follows').select('*').eq('follower_id', otherUserId).eq('following_id', user.id).maybeSingle();
 
@@ -46,7 +49,7 @@ export default function Chat({ params }) {
       const { data: profile } = await supabase.from('profiles').select('name, avatar_url').eq('id', otherUserId).single();
       if (profile) setOtherUser(profile);
 
-      // Messages fetch karo (Delete for me wale messages filter out ho jayenge)
+      // Fetch Messages
       const { data: msgs } = await supabase
         .from('messages')
         .select('*')
@@ -54,44 +57,59 @@ export default function Chat({ params }) {
         .order('created_at', { ascending: true });
 
       if (msgs) setMessages(msgs);
+
+      // Fetch Reactions
+      const msgIds = msgs?.map(m => m.id) || [];
+      if (msgIds.length > 0) {
+        const { data: rxns } = await supabase.from('message_reactions').select('*').in('message_id', msgIds);
+        if (rxns) {
+          const rxnMap = {};
+          rxns.forEach(r => {
+            if (!rxnMap[r.message_id]) rxnMap[r.message_id] = [];
+            rxnMap[r.message_id].push(r);
+          });
+          setReactions(rxnMap);
+        }
+      }
+
       setLoading(false);
     };
     initChat();
   }, [otherUserId, router]);
 
-  // Real-time listener
+  // Real-time Listener (Message, Delete, aur Reaction ke liye)
   useEffect(() => {
     if (!currentUser || !canChat) return;
 
     const channel = supabase
       .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages' },
-        (payload) => {
-          const newMsg = payload.new;
-          if (
-            (newMsg.sender_id === currentUser.id && newMsg.receiver_id === otherUserId) ||
-            (newMsg.sender_id === otherUserId && newMsg.receiver_id === currentUser.id)
-          ) {
-            setMessages((prev) => {
-              if (!prev.find(m => m.id === newMsg.id)) return [...prev, newMsg];
-              return prev;
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        const newMsg = payload.new;
+        if ((newMsg.sender_id === currentUser.id && newMsg.receiver_id === otherUserId) || (newMsg.sender_id === otherUserId && newMsg.receiver_id === currentUser.id)) {
+          setMessages((prev) => !prev.find(m => m.id === newMsg.id) ? [...prev, newMsg] : prev);
+        }
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, (payload) => {
+        setMessages((prev) => prev.filter(m => m.id !== payload.old.id));
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'message_reactions' }, async () => {
+        const msgIds = messages.map(m => m.id);
+        if (msgIds.length > 0) {
+          const { data: rxns } = await supabase.from('message_reactions').select('*').in('message_id', msgIds);
+          if (rxns) {
+            const rxnMap = {};
+            rxns.forEach(r => {
+              if (!rxnMap[r.message_id]) rxnMap[r.message_id] = [];
+              rxnMap[r.message_id].push(r);
             });
+            setReactions(rxnMap);
           }
         }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'messages' }, 
-        (payload) => {
-          setMessages((prev) => prev.filter(m => m.id !== payload.old.id));
-        }
-      )
+      })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [currentUser, otherUserId, canChat]);
+  }, [currentUser, otherUserId, canChat, messages]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -110,7 +128,6 @@ export default function Chat({ params }) {
 
     if (!error && savedMsg) {
       setMessages((prev) => [...prev, savedMsg]);
-
       await supabase.from('notifications').insert({
         user_id: otherUserId,
         sender_id: currentUser.id,
@@ -119,6 +136,36 @@ export default function Chat({ params }) {
         type: 'message'
       });
     }
+  };
+
+  const handleReact = async (msgId, emoji) => {
+    if (!currentUser) return;
+    const existingRxn = reactions[msgId]?.find(r => r.user_id === currentUser.id);
+
+    if (existingRxn) {
+      if (existingRxn.reaction === emoji) {
+        await supabase.from('message_reactions').delete().eq('id', existingRxn.id);
+      } else {
+        await supabase.from('message_reactions').update({ reaction: emoji }).eq('id', existingRxn.id);
+      }
+    } else {
+      await supabase.from('message_reactions').insert({ message_id: msgId, user_id: currentUser.id, reaction: emoji });
+    }
+    setSelectedMsg(null); 
+  };
+
+  const handleDeleteForEveryone = async (msgId) => {
+    const { error } = await supabase.from('messages').delete().eq('id', msgId);
+    if (!error) setMessages((prev) => prev.filter(msg => msg.id !== msgId));
+    setSelectedMsg(null);
+  };
+
+  const handleDeleteForMe = async (msg) => {
+    const isSender = msg.sender_id === currentUser.id;
+    const updateField = isSender ? { deleted_for_sender: true } : { deleted_for_receiver: true };
+    await supabase.from('messages').update(updateField).eq('id', msg.id);
+    setMessages((prev) => prev.filter(m => m.id !== msg.id));
+    setSelectedMsg(null);
   };
 
   const handleImageUpload = async (e) => {
@@ -131,10 +178,7 @@ export default function Chat({ params }) {
       formData.append('file', file);
       formData.append('upload_preset', 'apna-circle');
 
-      const res = await fetch(`https://api.cloudinary.com/v1_1/pbpkiacn/image/upload`, {
-        method: 'POST',
-        body: formData,
-      });
+      const res = await fetch(`https://api.cloudinary.com/v1_1/pbpkiacn/image/upload`, { method: 'POST', body: formData });
       const data = await res.json();
 
       if (data.secure_url) {
@@ -147,6 +191,13 @@ export default function Chat({ params }) {
 
         if (!error && savedMsg) {
           setMessages((prev) => [...prev, savedMsg]);
+          await supabase.from('notifications').insert({
+            user_id: otherUserId,
+            sender_id: currentUser.id,
+            sender_name: currentUserProfile?.name || currentUser.email.split('@')[0],
+            sender_avatar: currentUserProfile?.avatar_url || null,
+            type: 'message'
+          });
         }
       }
     } catch (error) {
@@ -154,26 +205,6 @@ export default function Chat({ params }) {
     } finally {
       setUploading(false);
     }
-  };
-
-  // 👈 Delete Functionality
-  const handleDeleteForEveryone = async (msgId) => {
-    const { error } = await supabase.from('messages').delete().eq('id', msgId);
-    if (!error) {
-      setMessages((prev) => prev.filter(msg => msg.id !== msgId));
-    }
-    setDeleteModalMsg(null);
-  };
-
-  const handleDeleteForMe = async (msg) => {
-    const isSender = msg.sender_id === currentUser.id;
-    const updateField = isSender ? { deleted_for_sender: true } : { deleted_for_receiver: true };
-
-    const { error } = await supabase.from('messages').update(updateField).eq('id', msg.id);
-    if (!error) {
-      setMessages((prev) => prev.filter(m => m.id !== msg.id));
-    }
-    setDeleteModalMsg(null);
   };
 
   if (loading) return <Loader />;
@@ -188,10 +219,10 @@ export default function Chat({ params }) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#f0f2f5' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#e5ddd5' }}>
       
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', padding: '12px 15px', backgroundColor: 'white', borderBottom: '1px solid #ddd', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '12px 15px', backgroundColor: 'white', borderBottom: '1px solid #ddd', flexShrink: 0, zIndex: 10 }}>
         <button onClick={() => router.back()} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '10px' }}>←</button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {otherUser?.avatar_url ? (
@@ -207,35 +238,63 @@ export default function Chat({ params }) {
       <div style={{ flex: 1, overflowY: 'auto', padding: '15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {messages.map((msg) => {
           const isMine = msg.sender_id === currentUser.id;
+          const msgReactions = reactions[msg.id] || [];
+
           return (
-            <div key={msg.id} style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start' }}>
+            <div key={msg.id} style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start', position: 'relative', marginBottom: msgReactions.length > 0 ? '15px' : '0' }}>
+              
+              {/* Message Bubble (Text Selection Disabled) */}
               <div 
-                // 👈 Message par click karne se Delete Popup khulega (sirf apne message par)
-                onClick={() => isMine && setDeleteModalMsg(msg)}
+                onClick={() => setSelectedMsg(msg)}
+                onContextMenu={(e) => e.preventDefault()} 
                 style={{
-                  backgroundColor: isMine ? '#0070f3' : 'white',
-                  color: isMine ? 'white' : '#333',
-                  padding: '8px 12px',
-                  borderRadius: isMine ? '15px 15px 0 15px' : '15px 15px 15px 0',
+                  backgroundColor: isMine ? '#dcf8c6' : 'white',
+                  padding: '6px 8px 6px 10px',
+                  borderRadius: '8px',
                   maxWidth: '75%',
                   fontSize: '15px',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                  boxShadow: '0 1px 1px rgba(0,0,0,0.2)',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '5px',
-                  cursor: isMine ? 'pointer' : 'default' 
+                  gap: '4px',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  userSelect: 'none', 
+                  WebkitUserSelect: 'none', 
+                  msUserSelect: 'none' 
                 }}
               >
                 {msg.image_url && (
-                  <img 
-                    src={msg.image_url} 
-                    alt="Chat" 
-                    onClick={(e) => { e.stopPropagation(); setFullImage(msg.image_url); }} // Image click par full screen
-                    style={{ width: '100%', borderRadius: '8px', maxHeight: '250px', objectFit: 'cover', cursor: 'pointer' }} 
-                  />
+                  <img src={msg.image_url} alt="Chat" onClick={(e) => { e.stopPropagation(); setFullImage(msg.image_url); }} style={{ width: '100%', borderRadius: '6px', maxHeight: '250px', objectFit: 'cover', cursor: 'pointer' }} />
                 )}
-                {msg.content && <span>{msg.content}</span>}
+                {msg.content && <span style={{ color: '#000' }}>{msg.content}</span>}
+                
+                <span style={{ fontSize: '10px', color: '#999', alignSelf: 'flex-end', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {isMine && <span style={{ color: '#34B7F1', fontSize: '12px' }}>✓✓</span>}
+                </span>
               </div>
+
+              {/* Message Reactions Display */}
+              {msgReactions.length > 0 && (
+                <div style={{ 
+                  position: 'absolute', 
+                  bottom: '-12px', 
+                  right: isMine ? '10px' : 'auto', 
+                  left: isMine ? 'auto' : '10px',
+                  backgroundColor: 'white', 
+                  borderRadius: '15px', 
+                  padding: '2px 6px', 
+                  fontSize: '12px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  display: 'flex',
+                  gap: '2px',
+                  border: '1px solid #eee'
+                }}>
+                  {msgReactions.map((r, i) => <span key={i}>{r.reaction}</span>)}
+                </div>
+              )}
+
             </div>
           );
         })}
@@ -243,7 +302,7 @@ export default function Chat({ params }) {
       </div>
 
       {/* Input Area */}
-      <div style={{ display: 'flex', gap: '8px', padding: '10px 15px', backgroundColor: 'white', borderTop: '1px solid #ddd', alignItems: 'center', flexShrink: 0, width: '100%', boxSizing: 'border-box' }}>
+      <div style={{ display: 'flex', gap: '8px', padding: '10px 15px', backgroundColor: 'white', alignItems: 'center', flexShrink: 0, width: '100%', boxSizing: 'border-box' }}>
         <div>
           <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} id="chat-image-upload" />
           <label htmlFor="chat-image-upload" style={{ cursor: 'pointer', fontSize: '24px', color: '#0070f3', display: 'flex', alignItems: 'center' }}>
@@ -257,45 +316,55 @@ export default function Chat({ params }) {
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-          style={{ flex: 1, padding: '10px 15px', borderRadius: '20px', border: '1px solid #ccc', outline: 'none', minWidth: '0' }}
+          style={{ flex: 1, padding: '12px 15px', borderRadius: '25px', border: '1px solid #ccc', outline: 'none', minWidth: '0', fontSize: '15px' }}
         />
         
         <button 
           onClick={handleSendMessage} 
-          style={{ padding: '10px 20px', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer', flexShrink: 0 }}
+          style={{ padding: '12px 20px', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '25px', fontWeight: 'bold', cursor: 'pointer', flexShrink: 0 }}
         >
           Send
         </button>
       </div>
 
-      {/* 👈 WHATSAPP STYLE DELETE MODAL */}
-      {deleteModalMsg && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ backgroundColor: 'white', borderRadius: '15px', width: '80%', maxWidth: '320px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-            <div style={{ padding: '20px', borderBottom: '1px solid #eee', textAlign: 'center', color: '#333', fontWeight: 'bold', fontSize: '16px' }}>
-              Delete message?
+      {/* WHATSAPP STYLE ACTION MENU (Reactions + Delete) */}
+      {selectedMsg && (
+        <div onClick={() => setSelectedMsg(null)} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', borderRadius: '12px', width: '85%', maxWidth: '340px', overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+            
+            {/* Emojis Bar */}
+            <div style={{ display: 'flex', justifyContent: 'space-around', padding: '12px', borderBottom: '1px solid #eee', backgroundColor: '#f9f9f9' }}>
+              {EMOJIS.map(emoji => (
+                <button 
+                  key={emoji} 
+                  onClick={() => handleReact(selectedMsg.id, emoji)}
+                  style={{ background: 'none', border: 'none', fontSize: '26px', cursor: 'pointer' }}
+                >
+                  {emoji}
+                </button>
+              ))}
             </div>
-            
-            <button 
-              onClick={() => handleDeleteForEveryone(deleteModalMsg.id)}
-              style={{ width: '100%', padding: '16px', background: 'none', border: 'none', borderBottom: '1px solid #eee', color: '#0070f3', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
-            >
-              Delete for everyone
-            </button>
-            
-            <button 
-              onClick={() => handleDeleteForMe(deleteModalMsg)}
-              style={{ width: '100%', padding: '16px', background: 'none', border: 'none', borderBottom: '1px solid #eee', color: '#0070f3', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
-            >
-              Delete for me
-            </button>
-            
-            <button 
-              onClick={() => setDeleteModalMsg(null)}
-              style={{ width: '100%', padding: '16px', background: 'none', border: 'none', color: '#0070f3', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
-            >
-              Cancel
-            </button>
+
+            {/* Delete Options */}
+            <div style={{ padding: '10px 0' }}>
+              {selectedMsg.sender_id === currentUser.id ? (
+                <>
+                  <button onClick={() => handleDeleteForEveryone(selectedMsg.id)} style={{ width: '100%', padding: '15px', background: 'none', border: 'none', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', borderBottom: '1px solid #f0f0f0' }}>
+                    🗑️ Delete for everyone
+                  </button>
+                  <button onClick={() => handleDeleteForMe(selectedMsg)} style={{ width: '100%', padding: '15px', background: 'none', border: 'none', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', borderBottom: '1px solid #f0f0f0' }}>
+                    🗑️ Delete for me
+                  </button>
+                </>
+              ) : (
+                <button onClick={() => handleDeleteForMe(selectedMsg)} style={{ width: '100%', padding: '15px', background: 'none', border: 'none', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', borderBottom: '1px solid #f0f0f0' }}>
+                  🗑️ Delete for me
+                </button>
+              )}
+              <button onClick={() => setSelectedMsg(null)} style={{ width: '100%', padding: '15px', background: 'none', border: 'none', textAlign: 'center', fontSize: '16px', fontWeight: 'bold', color: '#0070f3', cursor: 'pointer' }}>
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -314,4 +383,4 @@ export default function Chat({ params }) {
 
     </div>
   );
-        }
+    }
