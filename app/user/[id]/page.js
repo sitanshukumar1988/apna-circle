@@ -2,11 +2,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
+import Loader from '../../components/Loader'; 
 
 export default function UserProfile({ params }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [theyFollowMe, setTheyFollowMe] = useState(false); // 👈 Naya state
   const [currentUser, setCurrentUser] = useState(null);
   const [currentUserProfile, setCurrentUserProfile] = useState(null);
   const router = useRouter();
@@ -15,14 +17,13 @@ export default function UserProfile({ params }) {
 
   useEffect(() => {
     const fetchData = async () => {
-      // 1. Current user check
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setCurrentUser(user);
         const { data: myProfile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
         if (myProfile) setCurrentUserProfile(myProfile);
 
-        // Check if already following
+        // 1. Kya main isko follow karta hu?
         const { data: followData } = await supabase
           .from('follows')
           .select('*')
@@ -30,9 +31,17 @@ export default function UserProfile({ params }) {
           .eq('following_id', userId)
           .single();
         if (followData) setIsFollowing(true);
+
+        // 2. Kya ye mujhe follow karta hai?
+        const { data: theyFollowData } = await supabase
+          .from('follows')
+          .select('*')
+          .eq('follower_id', userId)
+          .eq('following_id', user.id)
+          .single();
+        if (theyFollowData) setTheyFollowMe(true);
       }
 
-      // 2. Target user ki profile fetch karo
       const { data: profileData } = await supabase.from('profiles').select('*').eq('id', userId).single();
       if (profileData) setProfile(profileData);
 
@@ -45,15 +54,12 @@ export default function UserProfile({ params }) {
     if (!currentUser) return;
     
     if (isFollowing) {
-      // Unfollow
       await supabase.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', userId);
       setIsFollowing(false);
     } else {
-      // Follow
       await supabase.from('follows').insert({ follower_id: currentUser.id, following_id: userId });
       setIsFollowing(true);
 
-      // Notification bhejo (Follow karne par)
       if (userId !== currentUser.id) {
         await supabase.from('notifications').insert({
           user_id: userId,
@@ -66,15 +72,18 @@ export default function UserProfile({ params }) {
     }
   };
 
-  if (loading) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
+  if (loading) return <Loader />; 
   if (!profile) return <div style={{ textAlign: 'center', marginTop: '50px' }}>User not found</div>;
+
+  // 👈 Check: Kya dono ek dusre ko follow karte hain?
+  const canChat = isFollowing && theyFollowMe;
 
   return (
     <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
       
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-        <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '15px' }}>←</button>
-        <h1 style={{ fontSize: '20px', fontWeight: 'bold' }}>Profile</h1>
+        <button onClick={() => router.back()} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '15px' }}>←</button>
+        <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Profile</h1>
       </div>
 
       <div style={{ textAlign: 'center', backgroundColor: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
@@ -89,25 +98,45 @@ export default function UserProfile({ params }) {
         <p style={{ color: '#0070f3' }}>📍 {profile.city}</p>
         
         {currentUser && currentUser.id !== userId && (
-          <button 
-            onClick={handleFollow} 
-            style={{ 
-              marginTop: '15px', 
-              padding: '10px 25px', 
-              backgroundColor: isFollowing ? '#ddd' : '#0070f3', 
-              color: isFollowing ? '#333' : 'white', 
-              border: 'none', 
-              borderRadius: '20px', 
-              cursor: 'pointer', 
-              fontWeight: 'bold',
-              fontSize: '14px'
-            }}
-          >
-            {isFollowing ? 'Following' : 'Follow'}
-          </button>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '15px' }}>
+            <button 
+              onClick={handleFollow} 
+              style={{ 
+                padding: '10px 25px', 
+                backgroundColor: isFollowing ? '#ddd' : '#0070f3', 
+                color: isFollowing ? '#333' : 'white', 
+                border: 'none', 
+                borderRadius: '20px', 
+                cursor: 'pointer', 
+                fontWeight: 'bold',
+                fontSize: '14px',
+                flex: 1
+              }}
+            >
+              {isFollowing ? 'Following' : 'Follow'}
+            </button>
+
+            {/* 👈 Message Button Update */}
+            <button 
+              onClick={() => canChat ? router.push(`/chat/${userId}`) : alert('Chat karne ke liye dono ko ek dusre ko follow karna hoga!')} 
+              style={{ 
+                padding: '10px 25px', 
+                backgroundColor: canChat ? 'white' : '#f0f2f5', 
+                color: canChat ? '#0070f3' : '#999', 
+                border: canChat ? '1px solid #0070f3' : '1px solid #ccc', 
+                borderRadius: '20px', 
+                cursor: canChat ? 'pointer' : 'not-allowed', 
+                fontWeight: 'bold',
+                fontSize: '14px',
+                flex: 1
+              }}
+            >
+              {canChat ? 'Message' : 'Follow to Chat'}
+            </button>
+          </div>
         )}
       </div>
 
     </div>
   );
-      }
+          }
