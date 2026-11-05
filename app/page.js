@@ -20,6 +20,17 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // Helper function emoji ke liye
+  const getReactionEmoji = (type) => {
+    switch(type) {
+      case 'love': return '❤️';
+      case 'haha': return '😂';
+      case 'wow': return '😮';
+      case 'sad': return '😢';
+      default: return '👍';
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -149,12 +160,11 @@ export default function Home() {
     }
   };
 
-  // 👈 NATIVE SHARE LOGIC
   const handleShare = async (post) => {
     const shareData = {
       title: 'Apna Circle Post',
       text: post.caption ? `Check out this post on Apna Circle: ${post.caption}` : 'Check out this post on Apna Circle!',
-      url: window.location.origin, // Filhaal homepage share hoga
+      url: window.location.origin, 
     };
 
     try {
@@ -253,7 +263,7 @@ export default function Home() {
                 <div style={{ padding: '10px 15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #eee', position: 'relative' }}>
                   <div style={{ display: 'flex', gap: '15px' }}>
                     <button onClick={() => setShowReactionPicker(showReactionPicker === post.id ? null : post.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', color: '#333', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      {myLike ? (myLike.reaction_type === 'love' ? '❤️' : myLike.reaction_type === 'haha' ? '😂' : '👍') : '🤍'} React
+                      {myLike ? getReactionEmoji(myLike.reaction_type) : '🤍'} React
                     </button>
 
                     <button onClick={() => router.push(`/comments/${String(post.id)}`)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', color: '#333', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -261,9 +271,11 @@ export default function Home() {
                     </button>
                   </div>
 
+                  {/* 👈 YAHAN DYNAMIC EMOJI FIX KIYA HAI */}
                   {postLikes > 0 && (
                     <div onClick={() => router.push(`/likes/${String(post.id)}`)} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', backgroundColor: '#f0f2f5', padding: '2px 8px', borderRadius: '10px', fontSize: '13px', color: '#555' }}>
-                      <span style={{ fontSize: '16px' }}>👍</span> {postLikes}
+                      <span style={{ fontSize: '16px' }}>{getReactionEmoji(postLikesArray[0]?.reaction_type)}</span> 
+                      <span style={{ marginLeft: '4px' }}>{postLikes}</span>
                     </div>
                   )}
 
@@ -292,7 +304,6 @@ export default function Home() {
               Post Options
             </div>
 
-            {/* 👈 Yahan handleShare me poora object bhej diya hai */}
             <button onClick={() => handleShare(activeOptionsPost)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '15px' }}>
               🔗 Share
             </button>
@@ -365,4 +376,4 @@ export default function Home() {
 
     </div>
   );
-}
+    }
