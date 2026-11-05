@@ -7,10 +7,13 @@ import { getLocale, getMessages } from 'next-intl/server';
 export const metadata = {
   title: 'Apna Circle',
   description: 'A private community app',
-  manifest: '/manifest.json',
+  // 👈 Yahan manifest line nahi hogi, Next.js khud manifest.ts se utha lega
   icons: {
-    icon: '/icon.png', 
-    apple: '/icon.png',
+    icon: [
+      { url: '/file_0000000060908208a9ebab06167.png', sizes: '192x192', type: 'image/png' },
+      { url: '/file_0000000060908208a9ebab06167(1).png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: '/file_0000000060908208a9ebab06167.png',
   },
 };
 
