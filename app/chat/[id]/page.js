@@ -257,12 +257,13 @@ export default function Chat({ params }) {
                   WebkitTouchCallout: 'none', 
                 }}
               >
+                {/* 👈 IMAGE CLICK SE PEHLE MENU KHULEGA (e.stopPropagation hata diya) */}
                 {msg.image_url && (
-                  <div style={{ pointerEvents: 'auto' }} onClick={(e) => { e.stopPropagation(); setFullImage(msg.image_url); }}>
+                  <div style={{ pointerEvents: 'auto' }}>
                     <img 
                       src={msg.image_url} 
                       alt="Chat" 
-                      style={{ width: '100%', borderRadius: '6px', maxHeight: '250px', objectFit: 'cover', cursor: 'pointer', pointerEvents: 'none' }} 
+                      style={{ width: '100%', borderRadius: '6px', maxHeight: '250px', objectFit: 'cover', pointerEvents: 'none' }} 
                     />
                   </div>
                 )}
@@ -347,6 +348,13 @@ export default function Chat({ params }) {
             </div>
 
             <div style={{ padding: '10px 0' }}>
+              {/* 👈 NAYA OPTION: View Photo (Sirf tab dikhega jab image ho) */}
+              {selectedMsg.image_url && (
+                <button onClick={() => { setFullImage(selectedMsg.image_url); setSelectedMsg(null); }} style={{ width: '100%', padding: '15px', background: 'none', border: 'none', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', borderBottom: '1px solid #f0f0f0' }}>
+                  🖼️ View Photo
+                </button>
+              )}
+
               {selectedMsg.sender_id === currentUser.id ? (
                 <>
                   <button onClick={() => handleDeleteForEveryone(selectedMsg.id)} style={{ width: '100%', padding: '15px', background: 'none', border: 'none', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', borderBottom: '1px solid #f0f0f0' }}>
@@ -375,11 +383,11 @@ export default function Chat({ params }) {
           <TransformWrapper>
             <TransformComponent wrapperStyle={{ width: "100vw", height: "100vh" }} contentStyle={{ width: "100%", height: "100%" }}>
               <img src={fullImage} alt="Full Chat" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-            </TransformComponent> {/* 👈 Yahan fix kar diya hai */}
+            </TransformComponent>
           </TransformWrapper>
         </div>
       )}
 
     </div>
   );
-        }
+}
