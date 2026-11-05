@@ -7,6 +7,7 @@ import Loader from '../../components/Loader';
 export default function LikesPage({ params }) {
   const [likes, setLikes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
   const router = useRouter();
   
   const postId = params.id;
@@ -16,12 +17,20 @@ export default function LikesPage({ params }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.push('/login'); return; }
 
+      // Database se likes fetch kar rahe hain
       const { data: likesData, error } = await supabase
         .from('likes')
         .select('*')
         .eq('post_id', postId);
       
-      if (likesData) setLikes(likesData);
+      if (error) {
+        console.error("Error fetching likes:", error);
+        setErrorMsg("Error: " + error.message);
+      }
+
+      if (likesData) {
+        setLikes(likesData);
+      }
       setLoading(false);
     };
     fetchLikes();
@@ -42,14 +51,23 @@ export default function LikesPage({ params }) {
   return (
     <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
       
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
         <button onClick={() => router.back()} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '15px' }}>←</button>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Reactions ({likes.length})</h1>
       </div>
 
+      {/* Error Message (Agar koi database error ho) */}
+      {errorMsg && (
+        <div style={{ backgroundColor: '#ffebee', color: '#c62828', padding: '10px', borderRadius: '5px', marginBottom: '15px', fontSize: '13px' }}>
+          {errorMsg}
+        </div>
+      )}
+
+      {/* Reactions List */}
       <div style={{ backgroundColor: 'white', borderRadius: '10px', padding: '15px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
         {likes.length === 0 ? (
-          <p style={{ textAlign: 'center', color: '#666', padding: '20px' }}>No likes yet.</p>
+          <p style={{ textAlign: 'center', color: '#666', padding: '20px', fontSize: '15px' }}>Abhi tak kisi ne react nahi kiya.</p>
         ) : (
           likes.map((like, index) => (
             <div 
@@ -68,17 +86,20 @@ export default function LikesPage({ params }) {
                 WebkitTouchCallout: 'none'
               }}
             >
+              {/* Profile Picture */}
               {like.user_avatar ? (
                 <img src={like.user_avatar} alt="DP" style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover', pointerEvents: 'none' }} />
               ) : (
                 <div style={{ width: '50px', height: '50px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', pointerEvents: 'none' }}>👤</div>
               )}
               
+              {/* User Name */}
               <div style={{ flex: 1, pointerEvents: 'none' }}>
-                <span style={{ fontWeight: 'bold', fontSize: '18px', display: 'block', color: '#333' }}>{like.user_name || 'User'}</span>
+                <span style={{ fontWeight: 'bold', fontSize: '17px', display: 'block', color: '#333' }}>{like.user_name || 'User'}</span>
               </div>
 
-              <span style={{ fontSize: '24px', pointerEvents: 'none' }}>
+              {/* Reaction Emoji */}
+              <span style={{ fontSize: '26px', pointerEvents: 'none' }}>
                 {getReactionEmoji(like.reaction_type)}
               </span>
             </div>
@@ -88,4 +109,4 @@ export default function LikesPage({ params }) {
 
     </div>
   );
-    }
+        }
