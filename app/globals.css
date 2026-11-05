@@ -4,9 +4,9 @@
 
 /* Aapka purana code (App Zoom Disable etc.) */
 html, body {
-  touch-action: pan-x pan-y; /* Sirf scroll allow karega, zoom nahi */
-  -webkit-text-size-adjust: 100%; /* Text auto-adjust band */
-  overflow-x: hidden; /* Side scroll band */
+  touch-action: pan-x pan-y; 
+  -webkit-text-size-adjust: 100%; 
+  overflow-x: hidden; 
   margin: 0;
   padding: 0;
   font-family: Arial, sans-serif;
@@ -14,17 +14,26 @@ html, body {
   color: #333;
 }
 
-/* 👇 GOOGLE TRANSLATE BANNER HIDE KARNE KA CSS 👇 */
-/* Jab user language change karega toh Google jo ganda sa banner dikhata hai, ye usko hatayega */
+/* 👇 GOOGLE TRANSLATE BANNER AUR ICON 100% HIDE KARNE KA CSS 👇 */
+
+/* 1. Top wale pure banner aur frame ko hide karein */
+iframe.skiptranslate {
+  display: none !important;
+  visibility: hidden !important;
+}
 
 .goog-te-banner-frame {
   display: none !important;
+  visibility: hidden !important;
 }
 
+/* 2. Body ko upar shift hone se rokna (jo Google karta hai) */
 body {
   top: 0px !important; 
+  position: static !important;
 }
 
+/* 3. Tooltip aur highlight hide karna */
 #goog-gt-tt, .goog-te-balloon-frame {
   display: none !important;
 }
@@ -34,11 +43,15 @@ body {
   box-shadow: none !important;
 }
 
-/* Google Translate ka logo/icon hide karne ke liye */
-.goog-logo-link {
+/* 4. Google ka logo aur select box hide karna */
+.goog-logo-link, .goog-te-gadget span {
   display: none !important;
 }
+
 .goog-te-gadget {
+  height: 0 !important;
+  overflow: hidden !important;
+  display: none !important;
   color: transparent !important;
   font-size: 0px !important;
-}
+  }
