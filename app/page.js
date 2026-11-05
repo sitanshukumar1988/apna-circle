@@ -18,6 +18,8 @@ export default function Home() {
   const [activeOptionsPost, setActiveOptionsPost] = useState(null); 
   const [savedPosts, setSavedPosts] = useState([]); 
   const [toastMsg, setToastMsg] = useState(''); 
+  
+  // Loading state (Sirf skeleton dikhane ke liye, screen block nahi karega)
   const [loading, setLoading] = useState(true);
   const [isHindi, setIsHindi] = useState(false); 
 
@@ -204,10 +206,12 @@ export default function Home() {
     setActiveOptionsPost(null);
   };
 
+  // 👇 YAHAN SE UI START HOTA HAI (Koi full screen loader nahi hai)
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f0f2f5', paddingBottom: '80px' }}>
       
-      {/* HEADER */}
+      {/* HEADER: Turant dikhega */}
       <header style={{ backgroundColor: '#0070f3', padding: '12px 15px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <h1 className="notranslate" style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>
@@ -228,7 +232,7 @@ export default function Home() {
 
       <main style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
         
-        {/* SKELETON LOADING (Instagram Style) */}
+        {/* 👇 LOADING SKELETON (Instagram Style) */}
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {[1, 2, 3].map(i => (
@@ -310,7 +314,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* BOTTOM NAVBAR */}
+      {/* BOTTOM NAVBAR: Turant dikhega */}
       <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px 0', position: 'fixed', bottom: 0, left: 0, width: '100%', zIndex: 1000, boxShadow: '0 -1px 5px rgba(0,0,0,0.1)' }}>
         <Link href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#0070f3', flex: 1, textDecoration: 'none' }}>
           <span style={{ fontSize: '22px' }}>🏠</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Home</span>
@@ -390,4 +394,4 @@ export default function Home() {
 
     </div>
   );
-                  }
+              }
