@@ -8,7 +8,7 @@ export default function UserProfile({ params }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [theyFollowMe, setTheyFollowMe] = useState(false); // 👈 Naya state
+  const [theyFollowMe, setTheyFollowMe] = useState(false); // 👈 Check karne ke liye ki wo hume follow karte hain ya nahi
   const [currentUser, setCurrentUser] = useState(null);
   const [currentUserProfile, setCurrentUserProfile] = useState(null);
   const router = useRouter();
@@ -23,25 +23,26 @@ export default function UserProfile({ params }) {
         const { data: myProfile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
         if (myProfile) setCurrentUserProfile(myProfile);
 
-        // 1. Kya main isko follow karta hu?
+        // 1. Kya MAIN isko follow karta hu? (.maybeSingle use kiya taaki error na aaye)
         const { data: followData } = await supabase
           .from('follows')
           .select('*')
           .eq('follower_id', user.id)
           .eq('following_id', userId)
-          .single();
+          .maybeSingle();
         if (followData) setIsFollowing(true);
 
-        // 2. Kya ye mujhe follow karta hai?
+        // 2. Kya YE mujhe follow karta hai? (.maybeSingle use kiya)
         const { data: theyFollowData } = await supabase
           .from('follows')
           .select('*')
           .eq('follower_id', userId)
           .eq('following_id', user.id)
-          .single();
+          .maybeSingle();
         if (theyFollowData) setTheyFollowMe(true);
       }
 
+      // 3. Target user ki profile fetch karo
       const { data: profileData } = await supabase.from('profiles').select('*').eq('id', userId).single();
       if (profileData) setProfile(profileData);
 
@@ -54,12 +55,17 @@ export default function UserProfile({ params }) {
     if (!currentUser) return;
     
     if (isFollowing) {
+      // Unfollow
       await supabase.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', userId);
       setIsFollowing(false);
+      // Agar humne unfollow kiya, toh chat bhi band ho jayegi
+      setTheyFollowMe(false); 
     } else {
+      // Follow
       await supabase.from('follows').insert({ follower_id: currentUser.id, following_id: userId });
       setIsFollowing(true);
 
+      // 👈 Notification bhejo jab follow karein
       if (userId !== currentUser.id) {
         await supabase.from('notifications').insert({
           user_id: userId,
@@ -75,7 +81,7 @@ export default function UserProfile({ params }) {
   if (loading) return <Loader />; 
   if (!profile) return <div style={{ textAlign: 'center', marginTop: '50px' }}>User not found</div>;
 
-  // 👈 Check: Kya dono ek dusre ko follow karte hain?
+  // 👈 Dono taraf se follow hona zaroori hai chat ke liye
   const canChat = isFollowing && theyFollowMe;
 
   return (
@@ -116,7 +122,6 @@ export default function UserProfile({ params }) {
               {isFollowing ? 'Following' : 'Follow'}
             </button>
 
-            {/* 👈 Message Button Update */}
             <button 
               onClick={() => canChat ? router.push(`/chat/${userId}`) : alert('Chat karne ke liye dono ko ek dusre ko follow karna hoga!')} 
               style={{ 
