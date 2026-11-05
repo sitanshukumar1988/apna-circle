@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
+import Loader from '../components/Loader';
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
@@ -25,7 +26,7 @@ export default function Notifications() {
 
       if (data) setNotifications(data);
 
-      // 2. Sabko "Read" mark kar do (Taaki Home par laal dot hat jaye)
+      // 2. Sabko "Read" mark kar do (Badge hat jayega)
       await supabase
         .from('notifications')
         .update({ is_read: true })
@@ -61,18 +62,19 @@ export default function Notifications() {
       case 'follow': return 'started following you';
       case 'like': return 'liked your post';
       case 'comment': return 'commented on your post';
+      case 'message': return 'sent you a message 💬'; // 👈 Naya Message Notification Text
       default: return 'did something';
     }
   };
 
-  if (loading) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
+  if (loading) return <Loader />;
 
   return (
     <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f0f2f5', paddingBottom: '80px' }}>
       
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-        <button onClick={() => router.push('/')} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '15px' }}>←</button>
-        <h1 style={{ fontSize: '20px', fontWeight: 'bold' }}>Notifications</h1>
+        <button onClick={() => router.back()} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '15px' }}>←</button>
+        <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Notifications</h1>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -96,8 +98,11 @@ export default function Notifications() {
                   )}
                 </div>
 
-                <div style={{ flex: 1 }}>
-                  <p style={{ margin: 0, fontSize: '15px', color: '#333' }}>
+                <div style={{ flex: 1 }} onClick={() => {
+                   if(notif.type === 'message') router.push(`/chat/${notif.sender_id}`);
+                   else router.push(`/user/${notif.sender_id}`);
+                }}>
+                  <p style={{ margin: 0, fontSize: '15px', color: '#333', cursor: 'pointer' }}>
                     <strong>{notif.sender_name || 'User'}</strong> {getNotificationText(notif.type)}.
                   </p>
                   <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#888' }}>
@@ -121,4 +126,4 @@ export default function Notifications() {
 
     </div>
   );
-        }
+  }
