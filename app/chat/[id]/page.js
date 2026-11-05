@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
+import Loader from '../../components/Loader'; // Loader import kiya
 
 export default function Chat({ params }) {
   const [messages, setMessages] = useState([]);
@@ -10,6 +11,7 @@ export default function Chat({ params }) {
   const [otherUser, setOtherUser] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [canChat, setCanChat] = useState(false); // 👈 Security State
   const router = useRouter();
   const bottomRef = useRef(null);
   
@@ -17,16 +19,27 @@ export default function Chat({ params }) {
 
   useEffect(() => {
     const initChat = async () => {
-      // Current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push('/login'); return; }
       setCurrentUser(user);
 
-      // Doosre user ki profile
+      // 👈 MUTUAL FOLLOW CHECK
+      const { data: iFollow } = await supabase.from('follows').select('*').eq('follower_id', user.id).eq('following_id', otherUserId).single();
+      const { data: theyFollow } = await supabase.from('follows').select('*').eq('follower_id', otherUserId).eq('following_id', user.id).single();
+
+      if (!iFollow || !theyFollow) {
+        setCanChat(false);
+        setLoading(false);
+        return; // Agar dono follow nahi karte, toh messages fetch mat karo
+      }
+      
+      setCanChat(true);
+
+      // Doosre user ki profile fetch karo
       const { data: profile } = await supabase.from('profiles').select('name, avatar_url').eq('id', otherUserId).single();
       if (profile) setOtherUser(profile);
 
-      // Purane messages fetch karo
+      // Messages fetch karo
       const { data: msgs } = await supabase
         .from('messages')
         .select('*')
@@ -39,6 +52,33 @@ export default function Chat({ params }) {
     initChat();
   }, [otherUserId, router]);
 
+  // REAL-TIME LISTENER
+  useEffect(() => {
+    if (!currentUser || !canChat) return;
+
+    const channel = supabase
+      .channel('custom-all-channel')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload) => {
+          const newMsg = payload.new;
+          if (
+            (newMsg.sender_id === currentUser.id && newMsg.receiver_id === otherUserId) ||
+            (newMsg.sender_id === otherUserId && newMsg.receiver_id === currentUser.id)
+          ) {
+            setMessages((prev) => {
+              if (!prev.find(m => m.id === newMsg.id)) return [...prev, newMsg];
+              return prev;
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [currentUser, otherUserId, canChat]);
+
   // Auto-scroll niche
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -47,7 +87,6 @@ export default function Chat({ params }) {
   // Text Message Bhejna
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !currentUser) return;
-
     const msgText = newMessage;
     setNewMessage('');
 
@@ -80,7 +119,6 @@ export default function Chat({ params }) {
       const data = await res.json();
 
       if (data.secure_url) {
-        // Photo ka URL chat me save karo
         const { data: savedMsg, error } = await supabase.from('messages').insert({
           sender_id: currentUser.id,
           receiver_id: otherUserId,
@@ -99,8 +137,22 @@ export default function Chat({ params }) {
     }
   };
 
-  if (loading) return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading Chat...</div>;
+  if (loading) return <Loader />;
 
+  // 👈 AGAR MUTUAL FOLLOW NAHI HAI TOH YEH SCREEN DIKHEGI
+  if (!canChat) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#f0f2f5', textAlign: 'center', padding: '20px' }}>
+        <h2 style={{ color: '#333', marginBottom: '10px' }}>Chat Not Allowed 🚫</h2>
+        <p style={{ color: '#666', marginBottom: '20px', fontSize: '15px' }}>Aap dono tab tak chat nahi kar sakte jab tak dono ek dusre ko follow nahi karte.</p>
+        <button onClick={() => router.back()} style={{ padding: '10px 20px', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }}>
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
+  // MAIN CHAT UI
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#f0f2f5' }}>
       
@@ -135,11 +187,9 @@ export default function Chat({ params }) {
                 flexDirection: 'column',
                 gap: '5px'
               }}>
-                {/* Image (Agar hai) */}
                 {msg.image_url && (
                   <img src={msg.image_url} alt="Chat" style={{ width: '100%', borderRadius: '8px', maxHeight: '250px', objectFit: 'cover' }} />
                 )}
-                {/* Text (Agar hai) */}
                 {msg.content && <span style={{ padding: '2px 5px' }}>{msg.content}</span>}
               </div>
             </div>
@@ -151,21 +201,13 @@ export default function Chat({ params }) {
       {/* Input Area */}
       <div style={{ display: 'flex', gap: '10px', padding: '15px', backgroundColor: 'white', borderTop: '1px solid #ddd', alignItems: 'center' }}>
         
-        {/* Photo Upload Button */}
         <div>
-          <input 
-            type="file" 
-            accept="image/*" 
-            onChange={handleImageUpload} 
-            style={{ display: 'none' }} 
-            id="chat-image-upload" 
-          />
+          <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} id="chat-image-upload" />
           <label htmlFor="chat-image-upload" style={{ cursor: 'pointer', fontSize: '24px', color: '#0070f3', display: 'flex', alignItems: 'center' }}>
             {uploading ? '⏳' : '📷'}
           </label>
         </div>
 
-        {/* Text Input */}
         <input 
           type="text" 
           placeholder="Type a message..." 
@@ -185,4 +227,4 @@ export default function Chat({ params }) {
 
     </div>
   );
-}
+    }
