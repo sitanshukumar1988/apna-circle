@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
 import Loader from '../../components/Loader'; 
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch"; // 👈 Import add kiya
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 export default function Chat({ params }) {
   const [messages, setMessages] = useState([]);
@@ -14,7 +14,10 @@ export default function Chat({ params }) {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [canChat, setCanChat] = useState(false); 
-  const [fullImage, setFullImage] = useState(null); // 👈 Full screen image ke liye naya state
+  const [fullImage, setFullImage] = useState(null); 
+  
+  const [deleteModalMsg, setDeleteModalMsg] = useState(null); // 👈 Delete popup ke liye state
+
   const router = useRouter();
   const bottomRef = useRef(null);
   
@@ -43,10 +46,11 @@ export default function Chat({ params }) {
       const { data: profile } = await supabase.from('profiles').select('name, avatar_url').eq('id', otherUserId).single();
       if (profile) setOtherUser(profile);
 
+      // Messages fetch karo (Delete for me wale messages filter out ho jayenge)
       const { data: msgs } = await supabase
         .from('messages')
         .select('*')
-        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id})`)
+        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId},deleted_for_sender.eq.false),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id},deleted_for_receiver.eq.false)`)
         .order('created_at', { ascending: true });
 
       if (msgs) setMessages(msgs);
@@ -55,6 +59,7 @@ export default function Chat({ params }) {
     initChat();
   }, [otherUserId, router]);
 
+  // Real-time listener
   useEffect(() => {
     if (!currentUser || !canChat) return;
 
@@ -74,6 +79,13 @@ export default function Chat({ params }) {
               return prev;
             });
           }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'messages' }, 
+        (payload) => {
+          setMessages((prev) => prev.filter(m => m.id !== payload.old.id));
         }
       )
       .subscribe();
@@ -135,14 +147,6 @@ export default function Chat({ params }) {
 
         if (!error && savedMsg) {
           setMessages((prev) => [...prev, savedMsg]);
-
-          await supabase.from('notifications').insert({
-            user_id: otherUserId,
-            sender_id: currentUser.id,
-            sender_name: currentUserProfile?.name || currentUser.email.split('@')[0],
-            sender_avatar: currentUserProfile?.avatar_url || null,
-            type: 'message'
-          });
         }
       }
     } catch (error) {
@@ -152,16 +156,33 @@ export default function Chat({ params }) {
     }
   };
 
+  // 👈 Delete Functionality
+  const handleDeleteForEveryone = async (msgId) => {
+    const { error } = await supabase.from('messages').delete().eq('id', msgId);
+    if (!error) {
+      setMessages((prev) => prev.filter(msg => msg.id !== msgId));
+    }
+    setDeleteModalMsg(null);
+  };
+
+  const handleDeleteForMe = async (msg) => {
+    const isSender = msg.sender_id === currentUser.id;
+    const updateField = isSender ? { deleted_for_sender: true } : { deleted_for_receiver: true };
+
+    const { error } = await supabase.from('messages').update(updateField).eq('id', msg.id);
+    if (!error) {
+      setMessages((prev) => prev.filter(m => m.id !== msg.id));
+    }
+    setDeleteModalMsg(null);
+  };
+
   if (loading) return <Loader />;
 
   if (!canChat) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#f0f2f5', textAlign: 'center', padding: '20px' }}>
         <h2 style={{ color: '#333', marginBottom: '10px' }}>Chat Not Allowed 🚫</h2>
-        <p style={{ color: '#666', marginBottom: '20px', fontSize: '15px' }}>Aap dono tab tak chat nahi kar sakte jab tak dono ek dusre ko follow nahi karte.</p>
-        <button onClick={() => router.back()} style={{ padding: '10px 20px', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }}>
-          Go Back
-        </button>
+        <button onClick={() => router.back()} style={{ padding: '10px 20px', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }}>Go Back</button>
       </div>
     );
   }
@@ -188,23 +209,28 @@ export default function Chat({ params }) {
           const isMine = msg.sender_id === currentUser.id;
           return (
             <div key={msg.id} style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start' }}>
-              <div style={{
-                backgroundColor: isMine ? '#0070f3' : 'white',
-                color: isMine ? 'white' : '#333',
-                padding: '8px 12px',
-                borderRadius: isMine ? '15px 15px 0 15px' : '15px 15px 15px 0',
-                maxWidth: '75%',
-                fontSize: '15px',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '5px'
-              }}>
+              <div 
+                // 👈 Message par click karne se Delete Popup khulega (sirf apne message par)
+                onClick={() => isMine && setDeleteModalMsg(msg)}
+                style={{
+                  backgroundColor: isMine ? '#0070f3' : 'white',
+                  color: isMine ? 'white' : '#333',
+                  padding: '8px 12px',
+                  borderRadius: isMine ? '15px 15px 0 15px' : '15px 15px 15px 0',
+                  maxWidth: '75%',
+                  fontSize: '15px',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '5px',
+                  cursor: isMine ? 'pointer' : 'default' 
+                }}
+              >
                 {msg.image_url && (
                   <img 
                     src={msg.image_url} 
                     alt="Chat" 
-                    onClick={() => setFullImage(msg.image_url)} // 👈 Image click hone par full screen
+                    onClick={(e) => { e.stopPropagation(); setFullImage(msg.image_url); }} // Image click par full screen
                     style={{ width: '100%', borderRadius: '8px', maxHeight: '250px', objectFit: 'cover', cursor: 'pointer' }} 
                   />
                 )}
@@ -242,19 +268,50 @@ export default function Chat({ params }) {
         </button>
       </div>
 
-      {/* 👈 FULL SCREEN IMAGE MODAL */}
+      {/* 👈 WHATSAPP STYLE DELETE MODAL */}
+      {deleteModalMsg && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '15px', width: '80%', maxWidth: '320px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+            <div style={{ padding: '20px', borderBottom: '1px solid #eee', textAlign: 'center', color: '#333', fontWeight: 'bold', fontSize: '16px' }}>
+              Delete message?
+            </div>
+            
+            <button 
+              onClick={() => handleDeleteForEveryone(deleteModalMsg.id)}
+              style={{ width: '100%', padding: '16px', background: 'none', border: 'none', borderBottom: '1px solid #eee', color: '#0070f3', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
+            >
+              Delete for everyone
+            </button>
+            
+            <button 
+              onClick={() => handleDeleteForMe(deleteModalMsg)}
+              style={{ width: '100%', padding: '16px', background: 'none', border: 'none', borderBottom: '1px solid #eee', color: '#0070f3', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
+            >
+              Delete for me
+            </button>
+            
+            <button 
+              onClick={() => setDeleteModalMsg(null)}
+              style={{ width: '100%', padding: '16px', background: 'none', border: 'none', color: '#0070f3', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* FULL SCREEN IMAGE MODAL */}
       {fullImage && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 2000 }}>
           <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 2001 }}>✕</button>
-          
           <TransformWrapper>
             <TransformComponent wrapperStyle={{ width: "100vw", height: "100vh" }} contentStyle={{ width: "100%", height: "100%" }}>
               <img src={fullImage} alt="Full Chat" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-            </TransformComponent>
+            </TransformWrapper>
           </TransformWrapper>
         </div>
       )}
 
     </div>
   );
-    }
+        }
