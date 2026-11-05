@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* App Zoom Disable */
+/* Aapka purana code (App Zoom Disable etc.) */
 html, body {
   touch-action: pan-x pan-y; /* Sirf scroll allow karega, zoom nahi */
   -webkit-text-size-adjust: 100%; /* Text auto-adjust band */
@@ -12,4 +12,33 @@ html, body {
   font-family: Arial, sans-serif;
   background-color: #f3f4f6;
   color: #333;
+}
+
+/* 👇 GOOGLE TRANSLATE BANNER HIDE KARNE KA CSS 👇 */
+/* Jab user language change karega toh Google jo ganda sa banner dikhata hai, ye usko hatayega */
+
+.goog-te-banner-frame {
+  display: none !important;
+}
+
+body {
+  top: 0px !important; 
+}
+
+#goog-gt-tt, .goog-te-balloon-frame {
+  display: none !important;
+}
+
+.goog-text-highlight {
+  background: none !important;
+  box-shadow: none !important;
+}
+
+/* Google Translate ka logo/icon hide karne ke liye */
+.goog-logo-link {
+  display: none !important;
+}
+.goog-te-gadget {
+  color: transparent !important;
+  font-size: 0px !important;
 }
