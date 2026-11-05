@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/navigation';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import Loader from './components/Loader';
 
 export default function Home() {
   const [posts, setPosts] = useState([]);
@@ -12,7 +13,7 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState(null);
   const [showReactionPicker, setShowReactionPicker] = useState(null);
   const [fullImage, setFullImage] = useState(null);
-  const [unreadCount, setUnreadCount] = useState(0); // Notification count ke liye
+  const [unreadCount, setUnreadCount] = useState(0); 
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -22,7 +23,6 @@ export default function Home() {
       setCurrentUser(user);
 
       if (user) {
-        // Naye (unread) notifications ka count nikaalo
         const { count } = await supabase
           .from('notifications')
           .select('*', { count: 'exact', head: true })
@@ -121,16 +121,17 @@ export default function Home() {
     setShowReactionPicker(null);
   };
 
-  if (loading) {
-    return <div style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</div>;
-  }
+  if (loading) return <Loader />;
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f0f2f5', paddingBottom: '80px' }}>
       
       {/* Top Header */}
       <header style={{ backgroundColor: '#0070f3', padding: '12px 15px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
-        <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Apna Circle</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Agar aapke paas logo.png hai toh yahan img tag laga sakte hain */}
+          <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Apna Circle</h1>
+        </div>
         <div style={{ textAlign: 'right' }}>
           <p style={{ margin: 0, fontSize: '9px', fontWeight: 'bold', opacity: 0.9 }}>FOUNDED BY SITANSHU KUMAR</p>
           <p style={{ margin: 0, fontSize: '8px', opacity: 0.8 }}>With SDRHP Team</p>
@@ -219,6 +220,11 @@ export default function Home() {
         <button onClick={() => router.push('/post')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3', flex: 1 }}>
           <span style={{ fontSize: '22px', fontWeight: 'bold' }}>➕</span><span style={{ fontSize: '10px', marginTop: '2px', fontWeight: 'bold' }}>Post</span>
         </button>
+
+        {/* 👈 YAHAN CHATS KA BUTTON ADD KIYA HAI */}
+        <button onClick={() => router.push('/chats')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1 }}>
+          <span style={{ fontSize: '22px' }}>💬</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Chats</span>
+        </button>
         
         {/* ALERTS BUTTON WITH RED BADGE */}
         <button onClick={() => router.push('/notifications')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#666', flex: 1, position: 'relative' }}>
@@ -266,4 +272,4 @@ export default function Home() {
 
     </div>
   );
-                                                 }
+      }
