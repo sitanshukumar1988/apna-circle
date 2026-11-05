@@ -19,8 +19,6 @@ export default function Home() {
   const [savedPosts, setSavedPosts] = useState([]); 
   const [toastMsg, setToastMsg] = useState(''); 
   const [loading, setLoading] = useState(true);
-  
-  // 👈 State: Language Check karne ke liye
   const [isHindi, setIsHindi] = useState(false); 
 
   const router = useRouter();
@@ -36,7 +34,6 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // 👈 Check karein ki kya language Hindi set hai?
     setIsHindi(document.cookie.includes('googtrans=/en/hi'));
 
     const fetchData = async () => {
@@ -212,19 +209,14 @@ export default function Home() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f0f2f5', paddingBottom: '80px' }}>
       
-      {/* Top Header */}
       <header style={{ backgroundColor: '#0070f3', padding: '12px 15px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          
-          {/* 👈 App Name with notranslate and condition */}
           <h1 className="notranslate" style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>
             {isHindi ? 'अपना सर्कल' : 'Apna Circle'}
           </h1>
-          
           <LanguageSwitcher /> 
         </div>
         
-        {/* 👈 Founder Name with notranslate and condition */}
         <div className="notranslate" style={{ textAlign: 'right' }}>
           <p style={{ margin: 0, fontSize: '9px', fontWeight: 'bold', opacity: 0.9 }}>
             {isHindi ? 'सितांशु कुमार द्वारा संस्थापित' : 'FOUNDED BY SITANSHU KUMAR'}
@@ -260,14 +252,10 @@ export default function Home() {
                     ) : (
                       <div style={{ width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</div>
                     )}
-                    {/* 👈 User Name notranslate so it doesn't turn into weird Hindi */}
                     <span className="notranslate" style={{ fontWeight: 'bold' }}>{displayName}</span>
                   </div>
                   
-                  <button 
-                    onClick={() => setActiveOptionsPost(post)} 
-                    style={{ background: 'none', border: 'none', fontSize: '24px', fontWeight: 'bold', cursor: 'pointer', color: '#666', padding: '0 5px' }}
-                  >
+                  <button onClick={() => setActiveOptionsPost(post)} style={{ background: 'none', border: 'none', fontSize: '24px', fontWeight: 'bold', cursor: 'pointer', color: '#666', padding: '0 5px' }}>
                     ⋮
                   </button>
                 </div>
@@ -275,9 +263,7 @@ export default function Home() {
                 <img src={post.image_url} alt="Post" onClick={() => setFullImage(post.image_url)} style={{ width: '100%', display: 'block', cursor: 'pointer' }} />
                 
                 {post.caption && (
-                  <div style={{ padding: '10px 15px', fontSize: '15px' }}>
-                    {post.caption}
-                  </div>
+                  <div style={{ padding: '10px 15px', fontSize: '15px' }}>{post.caption}</div>
                 )}
 
                 <div style={{ padding: '10px 15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #eee', position: 'relative' }}>
@@ -314,14 +300,11 @@ export default function Home() {
         )}
       </main>
 
-      {/* POST OPTIONS MODAL */}
       {activeOptionsPost && (
         <div onClick={() => setActiveOptionsPost(null)} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
           <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', width: '100%', maxWidth: '500px', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', paddingBottom: '20px', overflow: 'hidden' }}>
             
-            <div style={{ padding: '15px', textAlign: 'center', borderBottom: '1px solid #eee', fontWeight: 'bold', color: '#666' }}>
-              Post Options
-            </div>
+            <div style={{ padding: '15px', textAlign: 'center', borderBottom: '1px solid #eee', fontWeight: 'bold', color: '#666' }}>Post Options</div>
 
             <button onClick={() => handleShare(activeOptionsPost)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '15px' }}>
               🔗 Share
@@ -344,14 +327,12 @@ export default function Home() {
         </div>
       )}
 
-      {/* CUSTOM TOAST MESSAGE */}
       {toastMsg && (
         <div style={{ position: 'fixed', bottom: '90px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#333', color: 'white', padding: '10px 20px', borderRadius: '20px', fontSize: '14px', zIndex: 4000, boxShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
           {toastMsg}
         </div>
       )}
 
-      {/* Fixed Bottom Navigation Bar */}
       <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px 0', position: 'fixed', bottom: 0, left: 0, width: '100%', zIndex: 1000, boxShadow: '0 -1px 5px rgba(0,0,0,0.1)' }}>
         <button onClick={() => router.push('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#0070f3', flex: 1 }}>
           <span style={{ fontSize: '22px' }}>🏠</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Home</span>
@@ -384,4 +365,15 @@ export default function Home() {
 
       {fullImage && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 2000 }}>
-          <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color
+          <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 2001 }}>✕</button>
+          <TransformWrapper>
+            <TransformComponent wrapperStyle={{ width: "100vw", height: "100vh" }} contentStyle={{ width: "100%", height: "100%" }}>
+              <img src={fullImage} alt="Full Post" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            </TransformComponent>
+          </TransformWrapper>
+        </div>
+      )}
+
+    </div>
+  );
+    }
