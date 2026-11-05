@@ -2,9 +2,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link'; // 👈 Import kiya
+import Link from 'next/link';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import Loader from './components/Loader';
 import LanguageSwitcher from './components/LanguageSwitcher';
 
 export default function Home() {
@@ -205,11 +204,10 @@ export default function Home() {
     setActiveOptionsPost(null);
   };
 
-  if (loading) return <Loader />;
-
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f0f2f5', paddingBottom: '80px' }}>
       
+      {/* HEADER */}
       <header style={{ backgroundColor: '#0070f3', padding: '12px 15px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <h1 className="notranslate" style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>
@@ -229,7 +227,21 @@ export default function Home() {
       </header>
 
       <main style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
-        {posts.length === 0 ? (
+        
+        {/* SKELETON LOADING (Instagram Style) */}
+        {loading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} style={{ backgroundColor: 'white', borderRadius: '8px', padding: '15px', height: '350px', opacity: 0.6 }}>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '15px' }}>
+                  <div style={{ width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#ddd' }}></div>
+                  <div style={{ width: '120px', height: '15px', backgroundColor: '#ddd', borderRadius: '4px' }}></div>
+                </div>
+                <div style={{ width: '100%', height: '250px', backgroundColor: '#eee', borderRadius: '8px' }}></div>
+              </div>
+            ))}
+          </div>
+        ) : posts.length === 0 ? (
           <p style={{ textAlign: 'center', color: '#666' }}>Koi post nahi hai.</p>
         ) : (
           posts.map(post => {
@@ -242,10 +254,7 @@ export default function Home() {
             const postCommentsCount = commentsData[post.id]?.length || 0;
 
             return (
-              <div 
-                key={post.id} 
-                style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}
-              >
+              <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
                   <div onClick={() => router.push(`/user/${post.user_id}`)} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
                     {displayAvatar ? (
@@ -301,40 +310,7 @@ export default function Home() {
         )}
       </main>
 
-      {activeOptionsPost && (
-        <div onClick={() => setActiveOptionsPost(null)} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', width: '100%', maxWidth: '500px', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', paddingBottom: '20px', overflow: 'hidden' }}>
-            
-            <div style={{ padding: '15px', textAlign: 'center', borderBottom: '1px solid #eee', fontWeight: 'bold', color: '#666' }}>Post Options</div>
-
-            <button onClick={() => handleShare(activeOptionsPost)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '15px' }}>
-              🔗 Share
-            </button>
-
-            <button onClick={() => handleSaveToggle(activeOptionsPost.id)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '15px' }}>
-              {savedPosts.includes(activeOptionsPost.id) ? '❌ Unsave Post' : '🔖 Save Post'}
-            </button>
-
-            {activeOptionsPost.user_id === currentUser?.id && (
-              <button onClick={() => handleDeletePost(activeOptionsPost.id)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontSize: '16px', color: '#dc3545', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                🗑️ Delete Post
-              </button>
-            )}
-
-            <button onClick={() => setActiveOptionsPost(null)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', textAlign: 'center', fontSize: '16px', fontWeight: 'bold', color: '#0070f3', cursor: 'pointer' }}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {toastMsg && (
-        <div style={{ position: 'fixed', bottom: '90px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#333', color: 'white', padding: '10px 20px', borderRadius: '20px', fontSize: '14px', zIndex: 4000, boxShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
-          {toastMsg}
-        </div>
-      )}
-
-      {/* 👈 BOTTOM NAVIGATION BAR (Yahan <Link> use kiya hai) */}
+      {/* BOTTOM NAVBAR */}
       <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px 0', position: 'fixed', bottom: 0, left: 0, width: '100%', zIndex: 1000, boxShadow: '0 -1px 5px rgba(0,0,0,0.1)' }}>
         <Link href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#0070f3', flex: 1, textDecoration: 'none' }}>
           <span style={{ fontSize: '22px' }}>🏠</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Home</span>
@@ -365,6 +341,42 @@ export default function Home() {
         </Link>
       </nav>
 
+      {/* POST OPTIONS MODAL */}
+      {activeOptionsPost && (
+        <div onClick={() => setActiveOptionsPost(null)} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', width: '100%', maxWidth: '500px', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', paddingBottom: '20px', overflow: 'hidden' }}>
+            
+            <div style={{ padding: '15px', textAlign: 'center', borderBottom: '1px solid #eee', fontWeight: 'bold', color: '#666' }}>Post Options</div>
+
+            <button onClick={() => handleShare(activeOptionsPost)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '15px' }}>
+              🔗 Share
+            </button>
+
+            <button onClick={() => handleSaveToggle(activeOptionsPost.id)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontSize: '16px', color: '#333', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '15px' }}>
+              {savedPosts.includes(activeOptionsPost.id) ? '❌ Unsave Post' : '🔖 Save Post'}
+            </button>
+
+            {activeOptionsPost.user_id === currentUser?.id && (
+              <button onClick={() => handleDeletePost(activeOptionsPost.id)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', borderBottom: '1px solid #f0f0f0', textAlign: 'left', fontSize: '16px', color: '#dc3545', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                🗑️ Delete Post
+              </button>
+            )}
+
+            <button onClick={() => setActiveOptionsPost(null)} style={{ width: '100%', padding: '18px 20px', background: 'none', border: 'none', textAlign: 'center', fontSize: '16px', fontWeight: 'bold', color: '#0070f3', cursor: 'pointer' }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM TOAST MESSAGE */}
+      {toastMsg && (
+        <div style={{ position: 'fixed', bottom: '90px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#333', color: 'white', padding: '10px 20px', borderRadius: '20px', fontSize: '14px', zIndex: 4000, boxShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
+          {toastMsg}
+        </div>
+      )}
+
+      {/* FULL SCREEN IMAGE */}
       {fullImage && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 2000 }}>
           <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 2001 }}>✕</button>
@@ -378,4 +390,4 @@ export default function Home() {
 
     </div>
   );
-}
+                  }
