@@ -2,16 +2,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
-import Loader from '../../components/Loader'; // Loader import kiya
+import Loader from '../../components/Loader'; 
 
 export default function Chat({ params }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState(null);
   const [otherUser, setOtherUser] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [canChat, setCanChat] = useState(false); // 👈 Security State
+  const [canChat, setCanChat] = useState(false); 
   const router = useRouter();
   const bottomRef = useRef(null);
   
@@ -23,14 +24,18 @@ export default function Chat({ params }) {
       if (!user) { router.push('/login'); return; }
       setCurrentUser(user);
 
-      // 👈 MUTUAL FOLLOW CHECK
-      const { data: iFollow } = await supabase.from('follows').select('*').eq('follower_id', user.id).eq('following_id', otherUserId).single();
-      const { data: theyFollow } = await supabase.from('follows').select('*').eq('follower_id', otherUserId).eq('following_id', user.id).single();
+      // Apni profile fetch karo
+      const { data: myProfile } = await supabase.from('profiles').select('name, avatar_url').eq('id', user.id).single();
+      if (myProfile) setCurrentUserProfile(myProfile);
+
+      // Mutual follow check
+      const { data: iFollow } = await supabase.from('follows').select('*').eq('follower_id', user.id).eq('following_id', otherUserId).maybeSingle();
+      const { data: theyFollow } = await supabase.from('follows').select('*').eq('follower_id', otherUserId).eq('following_id', user.id).maybeSingle();
 
       if (!iFollow || !theyFollow) {
         setCanChat(false);
         setLoading(false);
-        return; // Agar dono follow nahi karte, toh messages fetch mat karo
+        return; 
       }
       
       setCanChat(true);
@@ -52,12 +57,12 @@ export default function Chat({ params }) {
     initChat();
   }, [otherUserId, router]);
 
-  // REAL-TIME LISTENER
+  // Real-time listener (Bina refresh kiye message aayega)
   useEffect(() => {
     if (!currentUser || !canChat) return;
 
     const channel = supabase
-      .channel('custom-all-channel')
+      .channel('schema-db-changes')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
@@ -79,12 +84,10 @@ export default function Chat({ params }) {
     return () => { supabase.removeChannel(channel); };
   }, [currentUser, otherUserId, canChat]);
 
-  // Auto-scroll niche
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Text Message Bhejna
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !currentUser) return;
     const msgText = newMessage;
@@ -98,10 +101,18 @@ export default function Chat({ params }) {
 
     if (!error && savedMsg) {
       setMessages((prev) => [...prev, savedMsg]);
+
+      // Notification insert logic
+      await supabase.from('notifications').insert({
+        user_id: otherUserId,
+        sender_id: currentUser.id,
+        sender_name: currentUserProfile?.name || currentUser.email.split('@')[0],
+        sender_avatar: currentUserProfile?.avatar_url || null,
+        type: 'message'
+      });
     }
   };
 
-  // Photo Bhejna (Cloudinary)
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -128,6 +139,15 @@ export default function Chat({ params }) {
 
         if (!error && savedMsg) {
           setMessages((prev) => [...prev, savedMsg]);
+
+          // Notification insert logic
+          await supabase.from('notifications').insert({
+            user_id: otherUserId,
+            sender_id: currentUser.id,
+            sender_name: currentUserProfile?.name || currentUser.email.split('@')[0],
+            sender_avatar: currentUserProfile?.avatar_url || null,
+            type: 'message'
+          });
         }
       }
     } catch (error) {
@@ -139,7 +159,6 @@ export default function Chat({ params }) {
 
   if (loading) return <Loader />;
 
-  // 👈 AGAR MUTUAL FOLLOW NAHI HAI TOH YEH SCREEN DIKHEGI
   if (!canChat) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#f0f2f5', textAlign: 'center', padding: '20px' }}>
@@ -152,13 +171,12 @@ export default function Chat({ params }) {
     );
   }
 
-  // MAIN CHAT UI
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#f0f2f5' }}>
       
-      {/* Chat Header */}
-      <div style={{ display: 'flex', alignItems: 'center', padding: '15px', backgroundColor: 'white', borderBottom: '1px solid #ddd' }}>
-        <button onClick={() => router.back()} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '15px' }}>←</button>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', padding: '12px 15px', backgroundColor: 'white', borderBottom: '1px solid #ddd', flexShrink: 0 }}>
+        <button onClick={() => router.back()} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '10px' }}>←</button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {otherUser?.avatar_url ? (
             <img src={otherUser.avatar_url} alt="DP" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} />
@@ -178,7 +196,7 @@ export default function Chat({ params }) {
               <div style={{
                 backgroundColor: isMine ? '#0070f3' : 'white',
                 color: isMine ? 'white' : '#333',
-                padding: '8px',
+                padding: '8px 12px',
                 borderRadius: isMine ? '15px 15px 0 15px' : '15px 15px 15px 0',
                 maxWidth: '75%',
                 fontSize: '15px',
@@ -190,7 +208,7 @@ export default function Chat({ params }) {
                 {msg.image_url && (
                   <img src={msg.image_url} alt="Chat" style={{ width: '100%', borderRadius: '8px', maxHeight: '250px', objectFit: 'cover' }} />
                 )}
-                {msg.content && <span style={{ padding: '2px 5px' }}>{msg.content}</span>}
+                {msg.content && <span>{msg.content}</span>}
               </div>
             </div>
           );
@@ -199,8 +217,7 @@ export default function Chat({ params }) {
       </div>
 
       {/* Input Area */}
-      <div style={{ display: 'flex', gap: '10px', padding: '15px', backgroundColor: 'white', borderTop: '1px solid #ddd', alignItems: 'center' }}>
-        
+      <div style={{ display: 'flex', gap: '8px', padding: '10px 15px', backgroundColor: 'white', borderTop: '1px solid #ddd', alignItems: 'center', flexShrink: 0, width: '100%', boxSizing: 'border-box' }}>
         <div>
           <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} id="chat-image-upload" />
           <label htmlFor="chat-image-upload" style={{ cursor: 'pointer', fontSize: '24px', color: '#0070f3', display: 'flex', alignItems: 'center' }}>
@@ -214,12 +231,12 @@ export default function Chat({ params }) {
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-          style={{ flex: 1, padding: '10px', borderRadius: '20px', border: '1px solid #ccc', outline: 'none' }}
+          style={{ flex: 1, padding: '10px 15px', borderRadius: '20px', border: '1px solid #ccc', outline: 'none', minWidth: '0' }}
         />
         
         <button 
           onClick={handleSendMessage} 
-          style={{ padding: '10px 20px', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer' }}
+          style={{ padding: '10px 20px', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '20px', fontWeight: 'bold', cursor: 'pointer', flexShrink: 0 }}
         >
           Send
         </button>
@@ -227,4 +244,4 @@ export default function Chat({ params }) {
 
     </div>
   );
-    }
+            }
