@@ -7,7 +7,7 @@ import { getLocale, getMessages } from 'next-intl/server';
 export const metadata = {
   title: 'Apna Circle',
   description: 'A private community app',
-  manifest: '/manifest.json',
+  // 👈 Yahan se manifest: '/manifest.json' hata diya gaya hai
   icons: {
     icon: [
       { url: '/file_0000000060908208a9ebab06167.png', sizes: '192x192', type: 'image/png' },
@@ -36,4 +36,4 @@ export default async function RootLayout({ children }) {
       </body>
     </html>
   );
-        }
+    }
