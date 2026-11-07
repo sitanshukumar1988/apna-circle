@@ -13,7 +13,7 @@ export default function UserProfile({ params }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [currentUserProfile, setCurrentUserProfile] = useState(null);
   
-  const [showFullImage, setShowFullImage] = useState(false); // 👈 Full screen image ke liye state
+  const [showFullImage, setShowFullImage] = useState(false); // 👈 Full screen image state
   const router = useRouter();
   
   const userId = params.id;
@@ -45,6 +45,7 @@ export default function UserProfile({ params }) {
         if (theyFollowData) setTheyFollowMe(true);
       }
 
+      // Target user ki profile fetch karo
       const { data: profileData } = await supabase.from('profiles').select('*').eq('id', userId).single();
       if (profileData) setProfile(profileData);
 
@@ -84,11 +85,13 @@ export default function UserProfile({ params }) {
   return (
     <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
       
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
         <button onClick={() => router.back()} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '15px' }}>←</button>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Profile</h1>
       </div>
 
+      {/* Profile Card */}
       <div style={{ textAlign: 'center', backgroundColor: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
         {profile.avatar_url ? (
           <img 
@@ -158,4 +161,4 @@ export default function UserProfile({ params }) {
 
     </div>
   );
-      }
+                                                                                   }
