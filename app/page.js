@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import LanguageSwitcher from './components/LanguageSwitcher'; // 👈 Language Switcher Import
+import LanguageSwitcher from './components/LanguageSwitcher'; // 👈 Ye import zaroori hai
 
 export default function Home() {
   const [posts, setPosts] = useState([]);
@@ -207,13 +207,13 @@ export default function Home() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f0f2f5', paddingBottom: '80px' }}>
       
-      {/* Top Header */}
+      {/* 👈 HEADER: Language Switcher yahan add hai */}
       <header style={{ backgroundColor: '#0070f3', padding: '12px 15px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <h1 className="notranslate" style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>
             {isHindi ? 'अपना सर्कल' : 'Apna Circle'}
           </h1>
-          <LanguageSwitcher /> {/* 👈 Language Switcher yahan add hai */}
+          <LanguageSwitcher /> 
         </div>
         
         <div className="notranslate" style={{ textAlign: 'right' }}>
@@ -228,7 +228,7 @@ export default function Home() {
 
       <main style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
         
-        {/* Skeleton Loading */}
+        {/* SKELETON LOADING */}
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {[1, 2, 3].map(i => (
@@ -310,7 +310,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* Bottom Navbar */}
+      {/* BOTTOM NAVBAR */}
       <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px 0', position: 'fixed', bottom: 0, left: 0, width: '100%', zIndex: 1000, boxShadow: '0 -1px 5px rgba(0,0,0,0.1)' }}>
         <Link href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#0070f3', flex: 1, textDecoration: 'none' }}>
           <span style={{ fontSize: '22px' }}>🏠</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Home</span>
@@ -341,7 +341,7 @@ export default function Home() {
         </Link>
       </nav>
 
-      {/* Post Options Modal */}
+      {/* POST OPTIONS MODAL */}
       {activeOptionsPost && (
         <div onClick={() => setActiveOptionsPost(null)} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
           <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', width: '100%', maxWidth: '500px', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', paddingBottom: '20px', overflow: 'hidden' }}>
@@ -369,14 +369,14 @@ export default function Home() {
         </div>
       )}
 
-      {/* Toast Message */}
+      {/* CUSTOM TOAST MESSAGE */}
       {toastMsg && (
         <div style={{ position: 'fixed', bottom: '90px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#333', color: 'white', padding: '10px 20px', borderRadius: '20px', fontSize: '14px', zIndex: 4000, boxShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
           {toastMsg}
         </div>
       )}
 
-      {/* Full Image Modal */}
+      {/* FULL SCREEN IMAGE */}
       {fullImage && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 2000 }}>
           <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 2001 }}>✕</button>
