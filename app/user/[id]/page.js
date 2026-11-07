@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
 import Loader from '../../components/Loader'; 
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch"; // 👈 1. Import kiya
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch"; // 👈 Zoom ke liye import
 
 export default function UserProfile({ params }) {
   const [profile, setProfile] = useState(null);
@@ -12,7 +12,8 @@ export default function UserProfile({ params }) {
   const [theyFollowMe, setTheyFollowMe] = useState(false); 
   const [currentUser, setCurrentUser] = useState(null);
   const [currentUserProfile, setCurrentUserProfile] = useState(null);
-  const [showFullImage, setShowFullImage] = useState(false); // 👈 2. State banayi
+  
+  const [showFullImage, setShowFullImage] = useState(false); // 👈 Full screen image ke liye state
   const router = useRouter();
   
   const userId = params.id;
@@ -25,6 +26,7 @@ export default function UserProfile({ params }) {
         const { data: myProfile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
         if (myProfile) setCurrentUserProfile(myProfile);
 
+        // 1. Kya main isko follow karta hu?
         const { data: followData } = await supabase
           .from('follows')
           .select('*')
@@ -33,6 +35,7 @@ export default function UserProfile({ params }) {
           .maybeSingle();
         if (followData) setIsFollowing(true);
 
+        // 2. Kya ye mujhe follow karta hai?
         const { data: theyFollowData } = await supabase
           .from('follows')
           .select('*')
@@ -91,7 +94,7 @@ export default function UserProfile({ params }) {
           <img 
             src={profile.avatar_url} 
             alt="DP" 
-            onClick={() => setShowFullImage(true)} // 👈 3. Click karne par image badi hogi
+            onClick={() => setShowFullImage(true)} // 👈 Click karne par full screen khulega
             style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #0070f3', cursor: 'pointer' }} 
           />
         ) : (
@@ -141,7 +144,7 @@ export default function UserProfile({ params }) {
         )}
       </div>
 
-      {/* 👈 4. FULL SCREEN IMAGE VIEWER */}
+      {/* 👈 FULL SCREEN IMAGE MODAL (Zoom Feature) */}
       {showFullImage && profile.avatar_url && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 2000 }}>
           <button onClick={() => setShowFullImage(false)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 2001 }}>✕</button>
@@ -155,4 +158,4 @@ export default function UserProfile({ params }) {
 
     </div>
   );
-             }
+      }
