@@ -6,6 +6,6 @@ export default createMiddleware({
 });
 
 export const config = {
-  // 👈 Ye line ensure karti hai ki .json, .js, .png wali files middleware ko bypass karein
+  // 👈 Ye matcher ensure karega ki home page aur files block na hon
   matcher: ['/((?!api|_next|_vercel|.*\\..*).*)']
 };
