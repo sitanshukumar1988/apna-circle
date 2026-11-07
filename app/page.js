@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import LanguageSwitcher from './components/LanguageSwitcher'; // 👈 Ye import zaroori hai
+import LanguageSwitcher from './components/LanguageSwitcher';
 
 export default function Home() {
   const [posts, setPosts] = useState([]);
@@ -14,6 +14,7 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState(null);
   const [showReactionPicker, setShowReactionPicker] = useState(null);
   const [fullImage, setFullImage] = useState(null);
+  const [zoomedDP, setZoomedDP] = useState(null); // 👈 Home feed par DP zoom karne ke liye naya state
   const [unreadCount, setUnreadCount] = useState(0); 
   const [activeOptionsPost, setActiveOptionsPost] = useState(null); 
   const [savedPosts, setSavedPosts] = useState([]); 
@@ -207,7 +208,6 @@ export default function Home() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f0f2f5', paddingBottom: '80px' }}>
       
-      {/* 👈 HEADER: Language Switcher yahan add hai */}
       <header style={{ backgroundColor: '#0070f3', padding: '12px 15px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <h1 className="notranslate" style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>
@@ -228,7 +228,6 @@ export default function Home() {
 
       <main style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
         
-        {/* SKELETON LOADING */}
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {[1, 2, 3].map(i => (
@@ -256,13 +255,27 @@ export default function Home() {
             return (
               <div key={post.id} style={{ backgroundColor: 'white', borderRadius: '8px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid #eee' }}>
-                  <div onClick={() => router.push(`/user/${post.user_id}`)} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                  
+                  {/* 👈 Yahan DP aur Name ka click alag kar diya hai */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     {displayAvatar ? (
-                      <img src={displayAvatar} alt="DP" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover' }} />
+                      <img 
+                        src={displayAvatar} 
+                        alt="DP" 
+                        onClick={() => setZoomedDP(displayAvatar)} // DP par click karne se zoom hoga
+                        style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover', cursor: 'pointer' }} 
+                      />
                     ) : (
                       <div style={{ width: '35px', height: '35px', borderRadius: '50%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</div>
                     )}
-                    <span className="notranslate" style={{ fontWeight: 'bold' }}>{displayName}</span>
+                    {/* Name par click karne se Profile khulegi */}
+                    <span 
+                      className="notranslate" 
+                      onClick={() => router.push(`/user/${post.user_id}`)} 
+                      style={{ fontWeight: 'bold', cursor: 'pointer' }}
+                    >
+                      {displayName}
+                    </span>
                   </div>
                   
                   <button onClick={() => setActiveOptionsPost(post)} style={{ background: 'none', border: 'none', fontSize: '24px', fontWeight: 'bold', cursor: 'pointer', color: '#666', padding: '0 5px' }}>
@@ -310,7 +323,6 @@ export default function Home() {
         )}
       </main>
 
-      {/* BOTTOM NAVBAR */}
       <nav style={{ backgroundColor: 'white', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px 0', position: 'fixed', bottom: 0, left: 0, width: '100%', zIndex: 1000, boxShadow: '0 -1px 5px rgba(0,0,0,0.1)' }}>
         <Link href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#0070f3', flex: 1, textDecoration: 'none' }}>
           <span style={{ fontSize: '22px' }}>🏠</span><span style={{ fontSize: '10px', marginTop: '2px' }}>Home</span>
@@ -341,7 +353,6 @@ export default function Home() {
         </Link>
       </nav>
 
-      {/* POST OPTIONS MODAL */}
       {activeOptionsPost && (
         <div onClick={() => setActiveOptionsPost(null)} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
           <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: 'white', width: '100%', maxWidth: '500px', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', paddingBottom: '20px', overflow: 'hidden' }}>
@@ -369,20 +380,31 @@ export default function Home() {
         </div>
       )}
 
-      {/* CUSTOM TOAST MESSAGE */}
       {toastMsg && (
         <div style={{ position: 'fixed', bottom: '90px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#333', color: 'white', padding: '10px 20px', borderRadius: '20px', fontSize: '14px', zIndex: 4000, boxShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
           {toastMsg}
         </div>
       )}
 
-      {/* FULL SCREEN IMAGE */}
+              {/* 👈 FULL SCREEN IMAGE MODAL */}
       {fullImage && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 2000 }}>
           <button onClick={() => setFullImage(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 2001 }}>✕</button>
           <TransformWrapper>
             <TransformComponent wrapperStyle={{ width: "100vw", height: "100vh" }} contentStyle={{ width: "100%", height: "100%" }}>
               <img src={fullImage} alt="Full Post" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            </TransformComponent>
+          </TransformWrapper>
+        </div>
+      )}
+
+      {/* 👈 DP FULL SCREEN MODAL (Feed ke liye) */}
+      {zoomedDP && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 2000 }}>
+          <button onClick={() => setZoomedDP(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', fontSize: '24px', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', zIndex: 2001 }}>✕</button>
+          <TransformWrapper>
+            <TransformComponent wrapperStyle={{ width: "100vw", height: "100vh" }} contentStyle={{ width: "100%", height: "100%" }}>
+              <img src={zoomedDP} alt="Full DP" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </TransformComponent>
           </TransformWrapper>
         </div>
